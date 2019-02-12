@@ -20,12 +20,12 @@ build:
 npm:
   stage: deploy
   script:
+    - git config --global user.email "yann.voumard@solenix.ch"
+    - git config --global user.name "Yann Voumard"
     - npm version prerelease
     - npm run build
     - echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
     #- npm publish
-    - git config --global user.email "yann.voumard@solenix.ch"
-    - git config --global user.name "Yann Voumard"
     - git push --follow-tags HEAD:esa
   only:
     - esa
