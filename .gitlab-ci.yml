@@ -19,15 +19,19 @@ build:
   artifacts:
     paths:
       - build
+  except:
+    - tags
 
 npm:
   stage: deploy
   script:
-    - npm version
+    - npm version prerelease
     - npm run build
     #- echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}'>.npmrc
     #- npm publish
-    - git push --follow-tags
+    - git push --follow-tags HEAD:esa
   only:
     - esa
+  except:
+    - tags
   when: manual
