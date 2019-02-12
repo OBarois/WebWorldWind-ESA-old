@@ -1,0 +1,32 @@
+image: node:10
+
+stages:
+  - build
+  - deploy
+
+before_script:
+  - npm install
+
+cache:
+  paths:
+    - node_modules
+
+build:
+  stage: build
+  script:
+    - npm version
+    - npm run build
+  artifacts:
+    paths:
+      - build
+
+npm:
+  stage: deploy
+  script:
+    - npm version
+    - npm run build
+    #- echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}'>.npmrc
+    #- npm publish
+    - git push --follow-tags
+  only: esa
+  when: manual
