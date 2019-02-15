@@ -22,7 +22,9 @@ define([
         './error/ArgumentError',
         './gesture/ClickRecognizer',
         './gesture/DragRecognizer',
+        './gesture/FlingRecognizer',
         './gesture/GestureRecognizer',
+        './geom/Location',
         './util/Logger',
         './geom/Matrix',
         './gesture/PanRecognizer',
@@ -40,7 +42,9 @@ define([
               ArgumentError,
               ClickRecognizer,
               DragRecognizer,
+              FlingRecognizer,
               GestureRecognizer,
+              Location,
               Logger,
               Matrix,
               PanRecognizer,
@@ -113,12 +117,21 @@ define([
             // this.clickRecognizer.addListener(this);
 
             // Intentionally not documented.
+            this.flingRecognizer = new FlingRecognizer(this.wwd, null);
+            this.flingRecognizer.addListener(this);
+            this.flingRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
+            this.flingRecognizer.recognizeSimultaneouslyWith(this.panRecognizer);
+
+            // Intentionally not documented.
             this.beginPoint = new Vec2(0, 0);
             this.lastPoint = new Vec2(0, 0);
             this.beginHeading = 0;
             this.beginTilt = 0;
             this.beginRange = 0;
             this.lastRotation = 0;
+            this.dragDelta = new Vec2(0, 0);
+            this.dragLastLocation = new Location(0, 0);
+            this.flingAnimationId = -1;
         };
 
         BasicWorldWindowController.prototype = Object.create(WorldWindowController.prototype);
@@ -147,6 +160,10 @@ define([
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.gestureStateChanged = function (recognizer) {
+            if (recognizer.state === WorldWind.BEGAN || recognizer.state === WorldWind.RECOGNIZED) {
+                this.cancelFlingAnimation();
+            }
+
             if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
                 this.handlePanOrDrag(recognizer);
             }
@@ -165,6 +182,9 @@ define([
             // else if (recognizer === this.clickRecognizer || recognizer === this.tapRecognizer) {
             //     this.handleClickOrTap(recognizer);
             // }
+            else if (recognizer === this.flingRecognizer) {
+                this.handleFling(recognizer);
+            }
         };
 
         // Intentionally not documented.
@@ -223,9 +243,19 @@ define([
 
                 navigator.lookAtLocation.latitude += forwardDegrees * cosHeading - sideDegrees * sinHeading;
                 navigator.lookAtLocation.longitude += forwardDegrees * sinHeading + sideDegrees * cosHeading;
-                this.lastPoint.set(tx, ty);
                 this.applyLimits();
                 this.wwd.redraw();
+
+                // Track state for possible fling behaviour
+                this.dragDelta.set(
+                    this.dragLastLocation.latitude - navigator.lookAtLocation.latitude,
+                    Angle.normalizedDegreesLongitude(
+                        this.dragLastLocation.longitude - navigator.lookAtLocation.longitude
+                    )
+                );
+                this.dragLastLocation.copy(navigator.lookAtLocation);
+
+                this.lastPoint.set(tx, ty);
             }
         };
 
@@ -242,50 +272,184 @@ define([
                 this.beginPoint.set(x, y);
                 this.lastPoint.set(x, y);
             } else if (state === WorldWind.CHANGED) {
-                var x1 = this.lastPoint[0],
-                    y1 = this.lastPoint[1],
-                    x2 = this.beginPoint[0] + tx,
-                    y2 = this.beginPoint[1] + ty;
+                this.move2D(tx, ty);
+            }
+        };
 
-                this.lastPoint.set(x2, y2);
+        BasicWorldWindowController.prototype.move2D = function (tx, ty) {
+            var navigator = this.wwd.navigator;
+            var x1 = this.lastPoint[0],
+                y1 = this.lastPoint[1],
+                x2 = this.beginPoint[0] + tx,
+                y2 = this.beginPoint[1] + ty;
 
-                var globe = this.wwd.globe,
-                    ray = this.wwd.rayThroughScreenPoint(this.wwd.canvasCoordinates(x1, y1)),
-                    point1 = new Vec3(0, 0, 0),
-                    point2 = new Vec3(0, 0, 0),
-                    origin = new Vec3(0, 0, 0);
+            this.lastPoint.set(x2, y2);
 
-                if (!globe.intersectsLine(ray, point1)) {
-                    return;
-                }
+            var globe = this.wwd.globe,
+                ray = this.wwd.rayThroughScreenPoint(this.wwd.canvasCoordinates(x1, y1)),
+                point1 = new Vec3(0, 0, 0),
+                point2 = new Vec3(0, 0, 0),
+                origin = new Vec3(0, 0, 0);
 
-                ray = this.wwd.rayThroughScreenPoint(this.wwd.canvasCoordinates(x2, y2));
-                if (!globe.intersectsLine(ray, point2)) {
-                    return;
-                }
+            if (!globe.intersectsLine(ray, point1)) {
+                return;
+            }
 
-                // Transform the original navigator state's modelview matrix to account for the gesture's change.
-                var modelview = Matrix.fromIdentity();
-                this.wwd.computeViewingTransform(null, modelview);
-                modelview.multiplyByTranslation(point2[0] - point1[0], point2[1] - point1[1], point2[2] - point1[2]);
+            ray = this.wwd.rayThroughScreenPoint(this.wwd.canvasCoordinates(x2, y2));
+            if (!globe.intersectsLine(ray, point2)) {
+                return;
+            }
 
-                // Compute the globe point at the screen center from the perspective of the transformed navigator state.
-                modelview.extractEyePoint(ray.origin);
-                modelview.extractForwardVector(ray.direction);
-                if (!globe.intersectsLine(ray, origin)) {
-                    return;
-                }
+            // Transform the original navigator state's modelview matrix to account for the gesture's change.
+            var modelview = Matrix.fromIdentity();
+            this.wwd.computeViewingTransform(null, modelview);
+            modelview.multiplyByTranslation(point2[0] - point1[0], point2[1] - point1[1], point2[2] - point1[2]);
 
-                // Convert the transformed modelview matrix to a set of navigator properties, then apply those
-                // properties to this navigator.
-                var params = modelview.extractViewingParameters(origin, navigator.roll, globe, {});
-                navigator.lookAtLocation.copy(params.origin);
-                navigator.range = params.range;
-                navigator.heading = params.heading;
-                navigator.tilt = params.tilt;
-                navigator.roll = params.roll;
-                this.applyLimits();
-                this.wwd.redraw();
+            // Compute the globe point at the screen center from the perspective of the transformed navigator state.
+            modelview.extractEyePoint(ray.origin);
+            modelview.extractForwardVector(ray.direction);
+            if (!globe.intersectsLine(ray, origin)) {
+                return;
+            }
+
+            // Convert the transformed modelview matrix to a set of navigator properties, then apply those
+            // properties to this navigator.
+            var params = modelview.extractViewingParameters(origin, navigator.roll, globe, {});
+            navigator.lookAtLocation.copy(params.origin);
+            navigator.range = params.range;
+            navigator.heading = params.heading;
+            navigator.tilt = params.tilt;
+            navigator.roll = params.roll;
+            this.applyLimits();
+            this.wwd.redraw();
+
+            this.dragDelta.set(x1 - x2, y1 - y2);
+            this.dragLastLocation.copy(navigator.lookAtLocation);
+        };
+
+        // Intentionally not documented.
+        BasicWorldWindowController.prototype.handleFling = function (recognizer) {
+            if (this.wwd.globe.is2D()) {
+                this.handleFling2D(recognizer);
+            } else {
+                this.handleFling3D(recognizer);
+            }
+        };
+
+        BasicWorldWindowController.prototype.handleFling2D = function (recognizer) {
+            if (recognizer.state === WorldWind.RECOGNIZED) {
+                var wwd = this.wwd;
+                var navigator = wwd.navigator;
+
+                var animationDuration = 1500; // ms
+
+                this.beginPoint.copy(this.lastPoint);
+
+                // Last location set by this animation
+                var lastLocation = new Location();
+                lastLocation.copy(this.dragLastLocation);
+
+                // Start time of this animation
+                var startTime = new Date();
+
+                var beginTx = this.dragDelta[0];
+                var beginTy = this.dragDelta[1];
+                var tx = beginTx;
+                var ty = beginTy;
+
+                // Animation Loop
+                var controller = this;
+                var animate = function () {
+                    controller.flingAnimationId = -1;
+
+                    if (!lastLocation.equals(navigator.lookAtLocation)) {
+                        // The navigator was changed externally. Aborting the animation.
+                        return;
+                    }
+
+                    // Compute the delta to apply using a sinusoidal out easing
+                    var elapsed = (new Date() - startTime) / animationDuration;
+                    elapsed = elapsed > 1 ? 1 : elapsed;
+                    var value = Math.sin(elapsed * Math.PI / 2);
+
+                    tx -= beginTx - beginTx * value;
+                    ty -= beginTy - beginTy * value;
+
+                    controller.move2D(tx, ty);
+
+                    // Save the new current lookAt location
+                    lastLocation.copy(navigator.lookAtLocation);
+
+                    // If we haven't reached the animation duration, request a new frame
+                    if (elapsed < 1) {
+                        controller.flingAnimationId = requestAnimationFrame(animate);
+                    }
+                };
+
+                this.flingAnimationId = requestAnimationFrame(animate);
+            }
+        };
+
+        // Intentionally not documented.
+        BasicWorldWindowController.prototype.handleFling3D = function (recognizer) {
+            if (recognizer.state === WorldWind.RECOGNIZED) {
+                var navigator = this.wwd.navigator;
+
+                var animationDuration = 1500; // ms
+
+                // Initial delta at the beginning of this animation
+                var initialDelta = new Vec2();
+                initialDelta.copy(this.dragDelta);
+
+                // Last location set by this animation
+                var lastLocation = new Location();
+                lastLocation.copy(this.dragLastLocation);
+
+                // Start time of this animation
+                var startTime = new Date();
+
+                // Animation Loop
+                var controller = this;
+                var animate = function () {
+                    controller.flingAnimationId = -1;
+
+                    if (!lastLocation.equals(navigator.lookAtLocation)) {
+                        // The navigator was changed externally. Aborting the animation.
+                        return;
+                    }
+
+                    // Compute the delta to apply using a sinusoidal out easing
+                    var elapsed = (new Date() - startTime) / animationDuration;
+                    elapsed = elapsed > 1 ? 1 : elapsed;
+                    var value = Math.sin(elapsed * Math.PI / 2);
+
+                    var deltaLatitude = initialDelta[0] - initialDelta[0] * value;
+                    var deltaLongitude = initialDelta[1] - initialDelta[1] * value;
+
+                    // Apply the delta to the current lookAt location
+                    navigator.lookAtLocation.latitude -= deltaLatitude;
+                    navigator.lookAtLocation.longitude -= deltaLongitude;
+                    controller.applyLimits();
+                    controller.wwd.redraw();
+
+                    // Save the new current lookAt location
+                    lastLocation.copy(navigator.lookAtLocation);
+
+                    // If we haven't reached the animation duration, request a new frame
+                    if (elapsed < 1) {
+                        controller.flingAnimationId = requestAnimationFrame(animate);
+                    }
+                };
+
+                this.flingAnimationId = requestAnimationFrame(animate);
+            }
+        };
+
+        // Intentionally not documented.
+        BasicWorldWindowController.prototype.cancelFlingAnimation = function () {
+            if (this.flingAnimationId !== -1) {
+                cancelAnimationFrame(this.flingAnimationId);
+                this.flingAnimationId = -1;
             }
         };
 
@@ -372,6 +536,8 @@ define([
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.handleWheelEvent = function (event) {
+            this.cancelFlingAnimation();
+
             var navigator = this.wwd.navigator;
             // Normalize the wheel delta based on the wheel delta mode. This produces a roughly consistent delta across
             // browsers and input devices.
