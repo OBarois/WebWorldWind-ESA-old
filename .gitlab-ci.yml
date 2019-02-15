@@ -26,7 +26,7 @@ npm:
     - npm run build
     - echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
     #- npm publish
-    - git push --follow-tags HEAD:origin/esa
+    - git push https://yvoumard:${GIT_TOKEN}@gitlab.solenix.ch/eo-downstream/slxde-eoapps/webworldwind.git --follow-tags HEAD:esa
   only:
     - esa
   except:
