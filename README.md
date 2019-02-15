@@ -17,6 +17,8 @@ The main differences are:
 - Enhanced Cartesian arithmetic
 - Various improvements and bug fixes
 
+If you are new to Web WorldWind, please start with the official release and documentation at https://worldwind.arc.nasa.gov/web/
+
 ## License
 
 Copyright 2003-2006, 2009, 2017, United States Government, as represented by the Administrator of the
