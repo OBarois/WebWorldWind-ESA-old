@@ -1,6 +1,6 @@
 {
   "name": "webworldwind-esa",
-  "version": "0.10.0-alpha.2",
+  "version": "0.10.0-alpha.3",
   "description": "Web WorldWind",
   "main": "build/dist/worldwind.min.js",
   "homepage": "https://worldwind.arc.nasa.gov",
