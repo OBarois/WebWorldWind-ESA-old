@@ -20,11 +20,14 @@
 define(['../error/ArgumentError',
         '../geom/Angle',
         '../geom/Location',
-        '../util/Logger'],
+        '../util/Logger',
+        '../util/WWUtil'
+    ],
     function (ArgumentError,
               Angle,
               Location,
-              Logger) {
+              Logger,
+              WWUtil) {
         "use strict";
 
         /**
@@ -389,7 +392,7 @@ define(['../error/ArgumentError',
                     Logger.logMessage(Logger.LEVEL_SEVERE, "ElevationModel", "elevationsForGrid", "missingResult"));
             }
 
-            result.fill(NaN);
+            WWUtil.fillArray(result, NaN);
             var resolution = Number.MAX_VALUE,
                 resultFilled = false,
                 preferredIndex = this.preferredCoverageIndex(sector, null, targetResolution);
