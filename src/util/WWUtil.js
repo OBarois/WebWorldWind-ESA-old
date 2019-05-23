@@ -303,6 +303,27 @@ define([
                 length -= searchString.length;
                 var lastIndex = subjectString.lastIndexOf(searchString, length);
                 return lastIndex !== -1 && lastIndex === length;
+            },
+
+            /**
+             * Determines whether an array includes a certain value among its entries, returning true or false as appropriate.
+             * @param {Array} array The array to analyse.
+             * @param {*} value The value to search for.
+             * @return {Boolean} true if the given value is found, otherwise, false.
+             */
+            arrayIncludes: function(array, value) {
+                if (!array) {
+                    return false;
+                }
+
+                for (var i = 0, len = array.length; i < len; i++) {
+                    var el = array[i];
+                    if ((el === value) || (typeof el === 'number' && typeof value === 'number' && isNaN(el) && isNaN(value))) {
+                        return true;
+                    }
+                }
+
+                return false;
             }
         };
 
