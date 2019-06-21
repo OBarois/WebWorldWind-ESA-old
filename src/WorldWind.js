@@ -213,6 +213,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         './shapes/ScreenImage',
         './shapes/ScreenText',
         './geom/Sector',
+        './layer/SentinelCloudlessLayer',
         './shapes/ShapeAttributes',
         './formats/shapefile/Shapefile',
         './layer/ShowTessellationLayer',
@@ -492,6 +493,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
               ScreenImage,
               ScreenText,
               Sector,
+              SentinelCloudlessLayer,
               ShapeAttributes,
               Shapefile,
               ShowTessellationLayer,
@@ -1008,6 +1010,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         WorldWind['ScreenText'] = ScreenText;
         WorldWind['ScreenImage'] = ScreenImage;
         WorldWind['Sector'] = Sector;
+        WorldWind['SentinelCloudlessLayer'] = SentinelCloudlessLayer;
         WorldWind['ShapeAttributes'] = ShapeAttributes;
         WorldWind['Shapefile'] = Shapefile;
         WorldWind['ShowTessellationLayer'] = ShowTessellationLayer;
