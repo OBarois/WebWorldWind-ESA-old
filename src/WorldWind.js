@@ -215,6 +215,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         './geom/Sector',
         './layer/SentinelCloudlessLayer',
         './shapes/ShapeAttributes',
+        './util/editor/ShapeEditor',
         './formats/shapefile/Shapefile',
         './layer/ShowTessellationLayer',
         './shaders/SkyProgram',
@@ -495,6 +496,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
               Sector,
               SentinelCloudlessLayer,
               ShapeAttributes,
+              ShapeEditor,
               Shapefile,
               ShowTessellationLayer,
               SkyProgram,
@@ -1012,6 +1014,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         WorldWind['Sector'] = Sector;
         WorldWind['SentinelCloudlessLayer'] = SentinelCloudlessLayer;
         WorldWind['ShapeAttributes'] = ShapeAttributes;
+        WorldWind['ShapeEditor'] = ShapeEditor;
         WorldWind['Shapefile'] = Shapefile;
         WorldWind['ShowTessellationLayer'] = ShowTessellationLayer;
         WorldWind['SkyProgram'] = SkyProgram;
