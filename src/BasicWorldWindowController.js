@@ -19,6 +19,7 @@
  */
 define([
         './geom/Angle',
+        './ArcBallCamera',
         './error/ArgumentError',
         './gesture/ClickRecognizer',
         './gesture/DragRecognizer',
@@ -39,6 +40,7 @@ define([
         './util/WWMath'
     ],
     function (Angle,
+              ArcBallCamera,
               ArgumentError,
               ClickRecognizer,
               DragRecognizer,
@@ -166,11 +168,19 @@ define([
                 this.cancelFlingAnimation();
             }
 
+            var isArcBall = this.wwd.navigator.camera instanceof ArcBallCamera;
             if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
-                this.handlePanOrDrag(recognizer);
+                if (isArcBall) {
+                    this.handlePanOrDrag(recognizer);
+                }
+                else {
+                    this.handleSecondaryDrag(recognizer);
+                }
             }
             else if (recognizer === this.secondaryDragRecognizer) {
-                this.handleSecondaryDrag(recognizer);
+                if (isArcBall) {
+                    this.handleSecondaryDrag(recognizer);
+                }
             }
             else if (recognizer === this.pinchRecognizer) {
                 this.handlePinch(recognizer);
@@ -565,35 +575,7 @@ define([
 
         // Documented in super-class.
         BasicWorldWindowController.prototype.applyLimits = function () {
-            var navigator = this.wwd.navigator;
-
-            // Clamp latitude to between -90 and +90, and normalize longitude to between -180 and +180.
-            navigator.lookAtLocation.latitude = WWMath.clamp(navigator.lookAtLocation.latitude, -90, 90);
-            navigator.lookAtLocation.longitude = Angle.normalizedDegreesLongitude(navigator.lookAtLocation.longitude);
-
-            // Clamp range to values greater than 1 in order to prevent degenerating to a first-person navigator when
-            // range is zero.
-            navigator.range = WWMath.clamp(navigator.range, 1, Number.MAX_VALUE);
-
-            // Normalize heading to between -180 and +180.
-            navigator.heading = Angle.normalizedDegrees(navigator.heading);
-
-            // Clamp tilt to between 0 and +90 to prevent the viewer from going upside down.
-            navigator.tilt = WWMath.clamp(navigator.tilt, 0, 90);
-
-            // Normalize heading to between -180 and +180.
-            navigator.roll = Angle.normalizedDegrees(navigator.roll);
-
-            // Apply 2D limits when the globe is 2D.
-            if (this.wwd.globe.is2D() && navigator.enable2DLimits) {
-                // Clamp range to prevent more than 360 degrees of visible longitude. Assumes a 45 degree horizontal
-                // field of view.
-                var maxRange = 2 * Math.PI * this.wwd.globe.equatorialRadius;
-                navigator.range = WWMath.clamp(navigator.range, 1, maxRange);
-
-                // Force tilt to 0 when in 2D mode to keep the viewer looking straight down.
-                navigator.tilt = 0;
-            }
+            this.wwd.navigator.camera.applyLimits();
         };
 
         return BasicWorldWindowController;

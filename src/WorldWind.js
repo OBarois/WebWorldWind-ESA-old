@@ -22,6 +22,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         './geom/Angle',
         './shapes/Annotation',
         './shapes/AnnotationAttributes',
+        './ArcBallCamera',
         './util/measure/AreaMeasurer',
         './error/ArgumentError',
         './globe/AsterV2ElevationCoverage',
@@ -54,6 +55,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         './globe/EarthRestElevationCoverage',
         './globe/ElevationCoverage',
         './globe/ElevationModel',
+        './FirstPersonCamera',
         './gesture/FlingRecognizer',
         './util/Font',
         './util/FrameStatistics',
@@ -314,6 +316,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
               Angle,
               Annotation,
               AnnotationAttributes,
+              ArcBallCamera,
               AreaMeasurer,
               ArgumentError,
               AsterV2ElevationCoverage,
@@ -346,6 +349,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
               EarthRestElevationCoverage,
               ElevationCoverage,
               ElevationModel,
+              FirstPersonCamera,
               FlingRecognizer,
               Font,
               FrameStatistics,
@@ -843,6 +847,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         WorldWind['Angle'] = Angle;
         WorldWind['Annotation'] = Annotation;
         WorldWind['AnnotationAttributes'] = AnnotationAttributes;
+        WorldWind['ArcBallCamera'] = ArcBallCamera;
         WorldWind['AreaMeasurer'] = AreaMeasurer;
         WorldWind['ArgumentError'] = ArgumentError;
         WorldWind['AsterV2ElevationCoverage'] = AsterV2ElevationCoverage;
@@ -875,6 +880,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         WorldWind['EarthRestElevationCoverage'] = EarthRestElevationCoverage;
         WorldWind['ElevationCoverage'] = ElevationCoverage;
         WorldWind['ElevationModel'] = ElevationModel;
+        WorldWind['FirstPersonCamera'] = FirstPersonCamera;
         WorldWind['FlingRecognizer'] = FlingRecognizer,
         WorldWind['Font'] = Font;
         WorldWind['FrameStatistics'] = FrameStatistics;

@@ -209,6 +209,10 @@ define([
 
         // Internal. Intentionally not documented.
         AtmosphereLayer.prototype.drawGround = function (dc) {
+            if (!dc.terrain) {
+                return;
+            }
+
             var gl = dc.currentGlContext,
                 program = dc.findAndBindProgram(GroundProgram),
                 terrain = dc.terrain,

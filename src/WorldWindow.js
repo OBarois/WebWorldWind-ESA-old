@@ -18,6 +18,7 @@
  * @exports WorldWindow
  */
 define([
+        './ArcBallCamera',
         './error/ArgumentError',
         './BasicWorldWindowController',
         './render/DrawContext',
@@ -32,6 +33,7 @@ define([
         './util/Logger',
         './navigate/LookAtNavigator',
         './geom/Matrix',
+        './navigate/Navigator',
         './pick/PickedObjectList',
         './geom/Position',
         './geom/Rectangle',
@@ -43,7 +45,8 @@ define([
         './geom/Vec3',
         './util/WWMath'
     ],
-    function (ArgumentError,
+    function (ArcBallCamera,
+              ArgumentError,
               BasicWorldWindowController,
               DrawContext,
               EarthElevationModel,
@@ -57,6 +60,7 @@ define([
               Logger,
               LookAtNavigator,
               Matrix,
+              Navigator,
               PickedObjectList,
               Position,
               Rectangle,
@@ -169,10 +173,10 @@ define([
 
             /**
              * The navigator used to manipulate the globe.
-             * @type {LookAtNavigator}
-             * @default [LookAtNavigator]{@link LookAtNavigator}
+             * @type {Navigator}
+             * @default [Navigator]{@link Navigator}
              */
-            this.navigator = new LookAtNavigator();
+            this.navigator = new Navigator(new ArcBallCamera(this));
 
             /**
              * The controller used to manipulate the globe.
@@ -680,12 +684,8 @@ define([
                     Logger.logMessage(Logger.LEVEL_SEVERE, "WorldWindow", "computeViewingTransform", "missingModelview"));
             }
 
-            modelview.setToIdentity();
-            this.worldWindowController.applyLimits();
             var globe = this.globe;
-            var navigator = this.navigator;
-            var lookAtPosition = new Position(navigator.lookAtLocation.latitude, navigator.lookAtLocation.longitude, 0);
-            modelview.multiplyByLookAtModelview(lookAtPosition, navigator.range, navigator.heading, navigator.tilt, navigator.roll, globe);
+            this.navigator.camera.createViewMatrix(modelview);
 
             if (projection) {
                 projection.setToIdentity();

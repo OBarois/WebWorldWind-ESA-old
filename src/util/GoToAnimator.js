@@ -100,9 +100,10 @@ define([
             // Reset the cancellation flag.
             this.cancelled = false;
 
+            this.wwd.navigator.lookAtLocation.altitude = position.altitude || 0;
+
             // Capture the target position and determine its altitude.
-            this.targetPosition = new Position(position.latitude, position.longitude,
-                position.altitude || this.wwd.navigator.range);
+            this.targetPosition = new Position(position.latitude, position.longitude, this.wwd.navigator.range);
 
             // Capture the start position and start time.
             this.startPosition = new Position(

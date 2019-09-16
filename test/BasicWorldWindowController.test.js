@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 define([
+    'src/ArcBallCamera',
     'src/BasicWorldWindowController',
     'src/render/DrawContext',
     'src/globe/Globe',
@@ -26,7 +27,7 @@ define([
     'src/geom/Vec3',
     'src/WorldWind',
     'src/WorldWindow'
-], function (BasicWorldWindowController, DrawContext, Globe, Globe2D, Matrix, LookAtNavigator, Rectangle, Vec2, Vec3, WorldWind, WorldWindow) {
+], function (ArcBallCamera, BasicWorldWindowController, DrawContext, Globe, Globe2D, Matrix, LookAtNavigator, Rectangle, Vec2, Vec3, WorldWind, WorldWindow) {
     "use strict";
 
     var MockGlContext = function () {
@@ -45,7 +46,8 @@ define([
     var wwd = new MockWorldWindow();
     wwd.globe = mockGlobe;
     wwd.drawContext = dc;
-    wwd.navigator = new LookAtNavigator(wwd);
+    wwd.navigator = new LookAtNavigator(new ArcBallCamera(wwd));
+    console.log('AAAAAAAAAAAAAA', wwd.navigator)
     wwd.worldWindowController = new BasicWorldWindowController(wwd);
     wwd.viewport = viewport;
     wwd.depthBits = 24;
