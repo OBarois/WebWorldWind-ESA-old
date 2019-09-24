@@ -718,6 +718,9 @@ define(['../../error/ArgumentError',
                 if (configuration.highlightAttributes) {
                     shape.highlightAttributes = configuration.highlightAttributes;
                 }
+                if (configuration && configuration.name) {
+                    shape.displayName = configuration.name;
+                }
                 if (configuration && configuration.pickDelegate) {
                     shape.pickDelegate = configuration.pickDelegate;
                 }
@@ -779,6 +782,9 @@ define(['../../error/ArgumentError',
                         configuration && configuration.attributes ? configuration.attributes : null);
                     if (configuration.highlightAttributes) {
                         shape.highlightAttributes = configuration.highlightAttributes;
+                    }
+                    if (configuration && configuration.name) {
+                        shape.displayName = configuration.name;
                     }
                     if (configuration && configuration.pickDelegate) {
                         shape.pickDelegate = configuration.pickDelegate;
@@ -845,12 +851,16 @@ define(['../../error/ArgumentError',
                     if (configuration.highlightAttributes) {
                         shape.highlightAttributes = configuration.highlightAttributes;
                     }
+                    if (configuration && configuration.name) {
+                        shape.displayName = configuration.name;
+                    }
                     if (configuration && configuration.pickDelegate) {
                         shape.pickDelegate = configuration.pickDelegate;
                     }
                     if (configuration && configuration.userProperties) {
                         shape.userProperties = configuration.userProperties;
-                    }                    layer.addRenderable(shape);
+                    }
+                    layer.addRenderable(shape);
             }
         };
 
@@ -909,6 +919,9 @@ define(['../../error/ArgumentError',
                         configuration && configuration.attributes ? configuration.attributes : null);
                     if (configuration.highlightAttributes) {
                         shape.highlightAttributes = configuration.highlightAttributes;
+                    }
+                    if (configuration && configuration.name) {
+                        shape.displayName = configuration.name;
                     }
                     if (configuration && configuration.pickDelegate) {
                         shape.pickDelegate = configuration.pickDelegate;
