@@ -43,6 +43,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         './geom/BoundingBox',
         './gesture/ClickRecognizer',
         './formats/collada/ColladaLoader',
+        './formats/collada/ColladaScene',
         './util/Color',
         './shapes/Compass',
         './layer/CompassLayer',
@@ -337,6 +338,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
               BoundingBox,
               ClickRecognizer,
               ColladaLoader,
+              ColladaScene,
               Color,
               Compass,
               CompassLayer,
@@ -868,6 +870,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         WorldWind['BoundingBox'] = BoundingBox;
         WorldWind['ClickRecognizer'] = ClickRecognizer;
         WorldWind['ColladaLoader'] = ColladaLoader;
+        WorldWind['ColladaScene'] = ColladaScene;
         WorldWind['Color'] = Color;
         WorldWind['Compass'] = Compass;
         WorldWind['CompassLayer'] = CompassLayer;
