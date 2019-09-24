@@ -99,7 +99,7 @@ define([
             this._loadStarted = false;
 
             //Internal use only.
-            this._minScale = 10e6;
+            this._scale = Number.MAX_SAFE_INTEGER || Math.pow(2, 53) - 1;
 
             //Internal use only.
             this._sunPositionsCacheKey = '';
@@ -207,12 +207,9 @@ define([
         StarFieldLayer.prototype.loadCommonUniforms = function (dc) {
             var gl = dc.currentGlContext;
             var program = dc.currentProgram;
-
-            var eyePoint = dc.eyePoint;
-            var eyePosition = dc.globe.computePositionFromPoint(eyePoint[0], eyePoint[1], eyePoint[2], {});
-            var scale = Math.max(eyePosition.altitude * 1.5, this._minScale);
+            
             this._matrix.copy(dc.modelviewProjection);
-            this._matrix.multiplyByScale(scale, scale, scale);
+            this._matrix.multiplyByScale(this._scale, this._scale, this._scale);
             program.loadModelviewProjection(gl, this._matrix);
 
             //this subtraction does not work properly on the GPU, it must be done on the CPU
