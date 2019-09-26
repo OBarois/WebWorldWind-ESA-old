@@ -50,6 +50,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         './layer/CoordinatesDisplayLayer',
         './util/Date',
         './layer/DigitalGlobeTiledImageLayer',
+        './render/DoubleBufferedFbo',
         './gesture/DragRecognizer',
         './render/DrawContext',
         './globe/EarthElevationModel',
@@ -87,6 +88,9 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         './shaders/GpuProgram',
         './cache/GpuResourceCache',
         './shaders/GpuShader',
+        './layer/GriddedDataLayer',
+        './shaders/GridParticleProgram',
+        './shaders/GridParticleSimProgram',
         './shaders/GroundProgram',
         './util/HashMap',
         './layer/heatmap/HeatMapColoredTile',
@@ -345,6 +349,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
               CoordinatesDisplayLayer,
               DateWW,
               DigitalGlobeTiledImageLayer,
+              DoubleBufferedFbo,
               DragRecognizer,
               DrawContext,
               EarthElevationModel,
@@ -382,6 +387,9 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
               GpuProgram,
               GpuResourceCache,
               GpuShader,
+              GriddedDataLayer,
+              GridParticleProgram,
+              GridParticleSimProgram,
               GroundProgram,
               HashMap,
               HeatMapColoredTile,
@@ -604,7 +612,8 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
               WWMath,
               WWMessage,
               WWUtil,
-              XmlDocument
+              XmlDocument,
+              WindBbox
     ) {
         "use strict";
         /**
@@ -877,6 +886,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         WorldWind['CoordinatesDisplayLayer'] = CoordinatesDisplayLayer;
         WorldWind['DateWW'] = DateWW;
         WorldWind['DigitalGlobeTiledImageLayer'] = DigitalGlobeTiledImageLayer;
+        WorldWind['DoubleBufferedFbo'] = DoubleBufferedFbo;
         WorldWind['DragRecognizer'] = DragRecognizer;
         WorldWind['DrawContext'] = DrawContext;
         WorldWind['EarthElevationModel'] = EarthElevationModel;
@@ -914,6 +924,9 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         WorldWind['GpuProgram'] = GpuProgram;
         WorldWind['GpuResourceCache'] = GpuResourceCache;
         WorldWind['GpuShader'] = GpuShader;
+        WorldWind['GriddedDataLayer'] = GriddedDataLayer;
+        WorldWind['GridParticleProgram'] = GridParticleProgram;
+        WorldWind['GridParticleSimProgram'] = GridParticleSimProgram;
         WorldWind['GroundProgram'] = GroundProgram;
         WorldWind['HashMap'] = HashMap;
         WorldWind['HeatMapColoredTile'] = HeatMapColoredTile;
