@@ -36,6 +36,9 @@ define([
 
         // Internal use only.
         SurfaceEllipseEditorFragment.prototype.canHandle = function (shape) {
+            if (shape instanceof Function) {
+                return shape.name === "SurfaceEllipse";
+            }
             return shape instanceof SurfaceEllipse;
         };
 
@@ -53,6 +56,11 @@ define([
         // Internal use only.
         SurfaceEllipseEditorFragment.prototype.getShapeCenter = function (shape) {
             return shape.center;
+        };
+
+        // Internal use only.
+        SurfaceEllipseEditorFragment.prototype.isRegularShape = function () {
+            return true;
         };
 
         // Internal use only.

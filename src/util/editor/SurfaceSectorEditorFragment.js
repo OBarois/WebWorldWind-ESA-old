@@ -41,6 +41,9 @@ define([
 
         // Internal use only.
         SurfaceSectorEditorFragment.prototype.canHandle = function (shape) {
+            if (shape instanceof Function) {
+                return shape.name === "SurfaceSector";
+            }
             return shape instanceof SurfaceSector;
         };
 
@@ -56,6 +59,11 @@ define([
         // Internal use only.
         SurfaceSectorEditorFragment.prototype.getShapeCenter = function (shape, globe) {
             return this.getCenterFromLocations(globe, shape._boundaries);
+        };
+
+        // Internal use only.
+        SurfaceSectorEditorFragment.prototype.isRegularShape = function () {
+            return true;
         };
 
         // Internal use only.

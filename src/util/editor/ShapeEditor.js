@@ -36,6 +36,7 @@ define([
         './SurfaceEllipseEditorFragment',
         './SurfaceCircleEditorFragment',
         '../../shapes/SurfacePolygon',
+        '../../shapes/SurfacePolyline',
         './SurfacePolygonEditorFragment',
         './SurfacePolylineEditorFragment',
         './SurfaceRectangleEditorFragment',
@@ -61,6 +62,7 @@ define([
               SurfaceEllipseEditorFragment,
               SurfaceCircleEditorFragment,
               SurfacePolygon,
+              SurfacePolyline,
               SurfacePolygonEditorFragment,
               SurfacePolylineEditorFragment,
               SurfaceRectangleEditorFragment,
@@ -190,6 +192,11 @@ define([
             this.shadowShapeLayer.pickEnabled = false;
 
             // Internal use only.
+            // The layer that holds the initial shapes created at shape creation by the create method.
+            this.creatorShapeLayer = new RenderableLayer("Shape Creator Initial Shape");
+            this.creatorShapeLayer.pickEnabled = false;
+
+            // Internal use only.
             // The editor fragment selected for the shape being edited or null.
             this.activeEditorFragment = null;
 
@@ -231,7 +238,13 @@ define([
             this._click0Time = 0;
             this._click1Time = 0;
             this._dbclickTimeout = 0;
-            this._clickDelay = 500;
+            this._clickDelay = 200;
+
+            // Internal use only.
+            // Used for shape creation
+            this.creatorEnabled = false;
+            this.creatorShapeProperties = null;
+            this.promisedShape = null;
 
             this._worldWindow.worldWindowController.addGestureListener(this);
         };
@@ -334,6 +347,69 @@ define([
         });
 
         /**
+         * Creates the specified shape. Currently, only surface shapes are supported.
+         * @param {SurfaceShape} shape The shape to edit.
+         * @param {{}} properties Configuration properties for the shape:
+         * <ul>
+         *     <li>TODO: describe properties fro each shape</li>
+         *     <li>attributes: {ShapeAttributes} attributes of the shape.</li>
+         * <ul>
+         * @return {Promise} <code>shape</code> if the creator can create the specified shape; otherwise
+         * <code>null</code>.
+         */
+        ShapeEditor.prototype.create = function (shape, properties) {
+            var res, rej;
+
+            this.stop();
+            this.setCreatorEnabled(true);
+
+            for (var i = 0, len = this.editorFragments.length; i < len; i++) {
+                var editorFragment = this.editorFragments[i];
+                if (editorFragment.canHandle(shape)) {
+                    this.activeEditorFragment = editorFragment;
+                    this.creatorShapeProperties = properties;
+                }
+            }
+
+            if (this.activeEditorFragment != null) {
+                var promise = new Promise(function (resolve, reject) {
+                    res = resolve;
+                    rej = reject;
+                });
+
+                promise.resolve = res;
+                promise.reject = rej;
+
+                this.promisedShape = promise;
+
+                return promise;
+            } else {
+                return null;
+            }
+        };
+
+        /**
+         * Identifies whether the shape editor create mode is armed.
+         * @return true if armed, false if not armed.
+         */
+        ShapeEditor.prototype.isCreatorEnabled = function() {
+            return this.creatorEnabled;
+        };
+
+        /**
+         * Arms and disarms the shape editor create mode. When armed, editor monitors user input and builds the
+         * shape in response to user actions. When disarmed, the shape editor ignores all user input for creation of a
+         * new shape.
+         *
+         * @param armed true to arm the shape editor create mode, false to disarm it.
+         */
+        ShapeEditor.prototype.setCreatorEnabled = function(creatorEnabled) {
+            if (this.creatorEnabled != creatorEnabled) {
+                this.creatorEnabled = creatorEnabled;
+            }
+        };
+
+        /**
          * Edits the specified shape. Currently, only surface shapes are supported.
          * @param {SurfaceShape} shape The shape to edit.
          * @param {{}} config Configuration properties for the ShapeEditor:
@@ -429,6 +505,10 @@ define([
                 this._worldWindow.insertLayer(0, this.shadowShapeLayer);
             }
 
+            if (this._worldWindow.indexOfLayer(this.creatorShapeLayer) == -1) {
+                this._worldWindow.addLayer(this.creatorShapeLayer);
+            }
+
             if (this._worldWindow.indexOfLayer(this.controlPointsLayer) == -1) {
                 this._worldWindow.addLayer(this.controlPointsLayer);
             }
@@ -446,16 +526,27 @@ define([
                 this._worldWindow.addLayer(this.annotationLayer);
             }
 
-            this.activeEditorFragment.initializeControlElements(
-                this._shape,
-                this.controlPointsLayer.renderables,
-                this.shadowControlPointsLayer.renderables,
-                this.accessoriesLayer.renderables,
-                resizeControlAttributes,
-                rotateControlAttributes,
-                moveControlAttributes,
-                shadowControlAttributes
-            );
+            if (this.isCreatorEnabled() &&
+                (this.activeEditorFragment instanceof SurfacePolylineEditorFragment ||
+                    this.activeEditorFragment instanceof SurfacePolygonEditorFragment)) {
+
+                this.activeEditorFragment.initializeCreationControlElements(
+                    this._shape,
+                    this.controlPointsLayer.renderables,
+                    moveControlAttributes
+                );
+            } else {
+                this.activeEditorFragment.initializeControlElements(
+                    this._shape,
+                    this.controlPointsLayer.renderables,
+                    this.shadowControlPointsLayer.renderables,
+                    this.accessoriesLayer.renderables,
+                    resizeControlAttributes,
+                    rotateControlAttributes,
+                    moveControlAttributes,
+                    shadowControlAttributes
+                );
+            }
 
             this.updateControlElements();
         };
@@ -465,6 +556,9 @@ define([
         ShapeEditor.prototype.removeControlElements = function () {
             this._worldWindow.removeLayer(this.controlPointsLayer);
             this.controlPointsLayer.removeAllRenderables();
+
+            this._worldWindow.removeLayer(this.creatorShapeLayer);
+            this.creatorShapeLayer.removeAllRenderables();
 
             this._worldWindow.removeLayer(this.shadowControlPointsLayer);
             this.shadowControlPointsLayer.removeAllRenderables();
@@ -481,19 +575,29 @@ define([
         // Internal use only.
         // Updates the position of the control elements.
         ShapeEditor.prototype.updateControlElements = function () {
-            this.activeEditorFragment.updateControlElements(
-                this._shape,
-                this._worldWindow.globe,
-                this.controlPointsLayer.renderables,
-                this.shadowControlPointsLayer.renderables,
-                this.accessoriesLayer.renderables
-            );
+            if (this.isCreatorEnabled() &&
+                (this.activeEditorFragment instanceof SurfacePolylineEditorFragment ||
+                    this.activeEditorFragment instanceof SurfacePolygonEditorFragment)) {
+                this.activeEditorFragment.updateCreationControlElements(
+                    this._shape,
+                    this._worldWindow.globe,
+                    this.controlPointsLayer.renderables
+                );
+            } else {
+                this.activeEditorFragment.updateControlElements(
+                    this._shape,
+                    this._worldWindow.globe,
+                    this.controlPointsLayer.renderables,
+                    this.shadowControlPointsLayer.renderables,
+                    this.accessoriesLayer.renderables
+                );
+            }
         };
 
         // Internal use only.
         // Dispatches the events relevant to the shape editor.
         ShapeEditor.prototype.onGestureEvent = function (event) {
-            if(this._shape === null) {
+            if(this._shape === null && !this.isCreatorEnabled()) {
                 return;
             }
 
@@ -518,10 +622,19 @@ define([
             this.actionCurrentY = y;
 
             var mousePoint = this._worldWindow.canvasCoordinates(x, y);
-            var tmpOutlineWidth = this._shape.highlightAttributes.outlineWidth;
-            this._shape.highlightAttributes.outlineWidth = 5;
+            var tmpOutlineWidth = 0;
+
+            if (this._shape !== null && !this.isCreatorEnabled()) {
+                tmpOutlineWidth = this._shape.highlightAttributes.outlineWidth;
+                this._shape.highlightAttributes.outlineWidth = 5;
+            }
+
             var pickList = this._worldWindow.pick(mousePoint);
-            this._shape.highlightAttributes.outlineWidth = tmpOutlineWidth;
+
+            if (tmpOutlineWidth !== 0) {
+                this._shape.highlightAttributes.outlineWidth = tmpOutlineWidth;
+            }
+
             var terrainObject = pickList.terrainObject();
 
             if (this._click0Time && !this._click1Time) {
@@ -543,7 +656,7 @@ define([
             for (var p = 0, len = pickList.objects.length; p < len; p++) {
                 var object = pickList.objects[p];
 
-                if (!object.isTerrain) {
+                if (!object.isTerrain && !this.isCreatorEnabled()) {
                     var userObject = object.userObject;
 
                     if (userObject === this._shape) {
@@ -571,6 +684,91 @@ define([
                         event.preventDefault();
                         break;
                     }
+                } else if (this.isCreatorEnabled() && this.activeEditorFragment !== null && this._shape === null) {
+                    // set default shape attributes and highlight attributes
+                    var attributes = new ShapeAttributes(null);
+                    attributes.outlineColor = Color.BLACK;
+                    attributes.interiorColor = new Color(0.8, 0.9, 0.9, 1.0);
+                    attributes.outlineWidth = 5;
+
+                    var highlightAttributes = new WorldWind.ShapeAttributes(attributes);
+                    highlightAttributes.outlineColor = WorldWind.Color.RED;
+                    highlightAttributes.outlineWidth = 5;
+
+                    if (this.activeEditorFragment.isRegularShape()) {
+                        if (this.activeEditorFragment instanceof PlacemarkEditorFragment) {
+                            this.creatorShapeProperties.position = terrainObject.position;
+                        } else {
+                            this.creatorShapeProperties.center = terrainObject.position;
+                        }
+
+                        this.creatorShapeProperties.radius = 3;
+                        this.creatorShapeProperties._boundaries = [
+                            {
+                                latitude: terrainObject.position.latitude - 0.5,
+                                longitude: terrainObject.position.longitude - 0.5
+                            },
+                            {
+                                latitude: terrainObject.position.latitude + 0.5,
+                                longitude: terrainObject.position.longitude - 0.5
+                            },
+                            {
+                                latitude: terrainObject.position.latitude + 0.5,
+                                longitude: terrainObject.position.longitude + 0.5
+                            }
+                        ];
+
+                        this._shape = this.activeEditorFragment.createShadowShape(this.creatorShapeProperties);
+
+                        if (this.activeEditorFragment instanceof PlacemarkEditorFragment) {
+                            var placemarkAttributes = new PlacemarkAttributes(null);
+                            placemarkAttributes.imageSource = "data:image/png;base64,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";
+                            placemarkAttributes.imageScale = 1;
+                            placemarkAttributes.imageColor = Color.WHITE;
+                            placemarkAttributes.drawLeaderLine = true;
+                            placemarkAttributes.leaderLineAttributes.outlineColor = Color.RED;
+
+                            var highlightPlacemarkAttributes = new PlacemarkAttributes(null);
+                            highlightPlacemarkAttributes.imageSource = "data:image/png;base64,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";
+                            highlightPlacemarkAttributes.imageScale = 1;
+                            highlightPlacemarkAttributes.imageColor = Color.RED;
+
+                            this._shape.attributes =  placemarkAttributes;
+                            this._shape.highlightAttributes = highlightPlacemarkAttributes;
+                        } else {
+
+                            this._shape.attributes =  attributes;
+                            this._shape.highlightAttributes = highlightAttributes;
+                        }
+                    } else {
+                        // Polyline and Polygon are not regular shapes
+                        if (this.creatorShapeProperties.boundaries == null) {
+                            this.creatorShapeProperties.boundaries = [];
+                        }
+
+                        if (this.creatorShapeProperties.boundaries.length < 2) {
+                            this.creatorShapeProperties.boundaries.push(new Location(
+                                terrainObject.position.latitude,
+                                terrainObject.position.longitude
+                            ));
+
+                            this.creatorShapeProperties.boundaries.push(new Location(
+                                terrainObject.position.latitude,
+                                terrainObject.position.longitude
+                            ));
+
+                            // return a polyline as shape
+                            this._shape = this.editorFragments[4].createShadowShape(this.creatorShapeProperties);
+                            this._shape.attributes =  attributes;
+                            this._shape.highlightAttributes = highlightAttributes;
+                        }
+                    }
+
+                    this._shape.highlighted = true;
+                    this.initializeControlElements();
+                    this.beginAction(terrainObject.position, this._allowManageControlPoint, this.controlPointsLayer.renderables[0]);
+
+                    event.preventDefault();
                 }
             }
         };
@@ -578,6 +776,9 @@ define([
         // Internal use only.
         // Updates the current action if any.
         ShapeEditor.prototype.handleMouseMove = function (event) {
+            var redrawRequired = this._highlightedItems.length > 0; // must redraw if we de-highlight previous shapes
+
+            var mousePoint = this._worldWindow.canvasCoordinates(event.clientX, event.clientY);
 
             if (this._click0Time && !this._click1Time) {
                 this._clicked1X = event.clientX;
@@ -590,8 +791,6 @@ define([
                 this._click0Time = 0;
                 this._click1Time = 0;
             }
-
-            var redrawRequired = this._highlightedItems.length > 0; // must redraw if we de-highlight previous shapes
 
             // De-highlight any previously highlighted shapes.
             for (var h = 0; h < this._highlightedItems.length; h++) {
@@ -623,9 +822,8 @@ define([
                 this._worldWindow.redraw(); // redraw to make the highlighting changes take effect on the screen
             }
 
-            if (this.actionType) {
+            if (this.actionType && this._shape !== null) {
 
-                var mousePoint = this._worldWindow.canvasCoordinates(event.clientX, event.clientY);
                 var terrainObject = this._worldWindow.pickTerrain(mousePoint).terrainObject();
 
                 if (terrainObject) {
@@ -658,6 +856,48 @@ define([
             var mousePoint = this._worldWindow.canvasCoordinates(event.clientX, event.clientY);
             var terrainObject = this._worldWindow.pickTerrain(mousePoint).terrainObject();
 
+            if (this.isCreatorEnabled() && this.activeEditorFragment !== null && this._shape !== null) {
+                if (this.activeEditorFragment.isRegularShape()) {
+                    this.setCreatorEnabled(false);
+                    this.promisedShape.resolve(this._shape);
+                } else {
+                    // add new vertex to shape
+                    this.activeEditorFragment.createNewVertex(this._shape, this._worldWindow.globe, terrainObject.position);
+
+                    if (this.activeEditorFragment instanceof SurfacePolylineEditorFragment) {
+                        this.updateControlElements();
+                        var latestIndex = this.controlPointsLayer.renderables.length - 1;
+                        this.actionControlPoint = this.controlPointsLayer.renderables[latestIndex];
+                    }
+
+                    if (this.activeEditorFragment instanceof SurfacePolygonEditorFragment &&
+                        this._shape instanceof SurfacePolyline &&
+                        this._shape.boundaries.length === 3) {
+
+                        var attributes = new ShapeAttributes(null);
+                        attributes.outlineColor = Color.BLACK;
+                        attributes.interiorColor = new Color(0.8, 0.9, 0.9, 1.0);
+                        attributes.outlineWidth = 5;
+
+                        var highlightAttributes = new ShapeAttributes(attributes);
+                        highlightAttributes.outlineColor = Color.RED;
+                        highlightAttributes.outlineWidth = 5;
+
+                        this._shape = this.activeEditorFragment.createShadowShape(this._shape);
+                        this._shape.attributes =  attributes;
+                        this._shape.highlightAttributes = highlightAttributes;
+                        this._shape.highlighted = true;
+                        this.initializeControlElements();
+                        this.beginAction(terrainObject.position, this._allowManageControlPoint, this.controlPointsLayer.renderables[0]);
+                    }
+
+                    this.updateControlElements();
+                    this.updateAnnotation(this.actionControlPoint);
+
+                    this._worldWindow.redraw();
+                }
+            }
+
             // The editor provides vertex insertion and removal for SurfacePolygon and SurfacePolyline.
             // Double click when the cursor is over a control point will remove it.
             // Single click when the cursor is over a shadow control point will add it.
@@ -668,6 +908,48 @@ define([
                             && this.actionType == 'location'
                             && terrainObject
                             && this._allowManageControlPoint) {
+                            if (this.isCreatorEnabled() && this.activeEditorFragment !== null) {
+                                // if we are in the creation process and a double click is detected
+                                // we verify the minimum conditions for the shape to be created
+                                // and resolve the promise (only for polylines and polygons we need
+                                // the double click as the final action)
+                                if (this.activeEditorFragment instanceof SurfacePolylineEditorFragment) {
+                                    if (this._shape.boundaries < 2) {
+                                        this._shape = null;
+                                    } else {
+                                        this._shape.boundaries.splice(-2,2);
+                                        this._shape.boundaries.shift();
+                                        this.controlPointsLayer.renderables.pop();
+                                        this.updateControlElements();
+                                        this.updateAnnotation(this.actionControlPoint);
+
+                                        this._worldWindow.redraw();
+                                    }
+                                } else if (this.activeEditorFragment instanceof SurfacePolygonEditorFragment) {
+                                    if (this._shape.boundaries < 3) {
+                                        this._shape = null;
+                                    }  else {
+                                        this._shape.boundaries.pop();
+                                        this._shape.boundaries.shift();
+                                        this.controlPointsLayer.renderables.pop();
+                                        this.updateControlElements();
+                                        this.updateAnnotation(this.actionControlPoint);
+
+                                        this._worldWindow.redraw();
+                                    }
+                                } else {
+                                    this._shape = null;
+                                }
+
+                                var scope = this;
+                                this.promisedShape.resolve(this._shape);
+                                this.promisedShape.then(function(shape) {
+                                    scope.setCreatorEnabled(false);
+                                    scope.endAction();
+                                }).finally(function () {
+                                    scope.stop();
+                                });
+                            }
                             this.actionSecondaryBehavior = true;
                             this.reshape(terrainObject.position);
                         }
@@ -678,7 +960,9 @@ define([
 
                 }
 
-                this.endAction();
+                if (!this.isCreatorEnabled() && this.activeEditorFragment !== null) {
+                    this.endAction();
+                }
             }
         };
 
@@ -696,6 +980,10 @@ define([
             this.actionSecondaryBehavior = alternateAction;
 
             var editingAttributes = null;
+
+            if (this.isCreatorEnabled()) {
+                this.creatorShapeLayer.addRenderable(this._shape);
+            }
 
             // Place a shadow shape at the original location of the shape
             if (this.activeEditorFragment instanceof PlacemarkEditorFragment) {
@@ -723,7 +1011,6 @@ define([
             } else {
                 shadowShape.highlightAttributes = new ShapeAttributes(this.originalHighlightAttributes);
             }
-
             shadowShape.highlighted = true;
 
             this.shadowShapeLayer.addRenderable(shadowShape);
@@ -733,6 +1020,7 @@ define([
 
         // Internal use only.
         ShapeEditor.prototype.endAction = function () {
+            this.creatorShapeLayer.removeAllRenderables();
             this.shadowShapeLayer.removeAllRenderables();
 
             if (this.activeEditorFragment instanceof PlacemarkEditorFragment) {
@@ -762,6 +1050,7 @@ define([
                 (purpose !== ShapeEditorConstants.ROTATION && this._allowReshape) ||
                 (purpose === ShapeEditorConstants.LOCATION && this._allowManageControlPoint && this.actionSecondaryBehavior) ||
                 (purpose === ShapeEditorConstants.SHADOW && this._allowManageControlPoint && this.actionSecondaryBehavior)) {
+
                 this.activeEditorFragment.reshape(
                     this._shape,
                     this._worldWindow.globe,

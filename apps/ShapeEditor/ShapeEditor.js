@@ -185,25 +185,8 @@ requirejs(['../../src/WorldWind',
                         var pickedShape = pickList.objects[p].userObject;
 
                         if (selectedShape !== pickedShape && !pickedShape.userProperties.purpose) {
-                            if (pickedShape instanceof WorldWind.SurfaceCircle) {
-                                selectedShape = circleShape;
-                            } else if (pickedShape instanceof WorldWind.SurfaceEllipse) {
-                                selectedShape = ellipseShape;
-                            } else if (pickedShape instanceof WorldWind.Placemark) {
-                                selectedShape = placemark;
-                            } else if (pickedShape instanceof WorldWind.SurfacePolygon) {
-                                if (Array.isArray(pickedShape.boundaries[0])) {
-                                    selectedShape = multiPolygonShape;
-                                } else {
-                                    selectedShape = polygonShape;
-                                }
-                            } else if (pickedShape instanceof WorldWind.SurfacePolyline) {
-                                selectedShape = polylineShape;
-                            } else if (pickedShape instanceof WorldWind.SurfaceRectangle) {
-                                selectedShape = rectangleShape;
-                            } else if (pickedShape instanceof WorldWind.SurfaceSector) {
-                                selectedShape = sectorShape;
-                            }
+
+                            selectedShape = pickedShape;
 
                             shapeEditor.stop();
                             shapeEditor.edit(selectedShape, config);
@@ -220,6 +203,203 @@ requirejs(['../../src/WorldWind',
         };
 
         wwd.addEventListener("click", handlePick);
+
+        document.getElementById("new_circle").addEventListener("click", function(){
+            var properties = {
+                center: null,
+                radius: 200e3,
+                attributes: attributes
+            };
+
+            shapeEditor.create(WorldWind.SurfaceCircle, properties).then(
+                function (shape) {
+                    if (shape !== null) {
+                        shape.highlightAttributes = highlightAttributes;
+                        shapesLayer.addRenderable(shape);
+                        shapeEditor.edit(shape, config);
+                    } else {
+                        console.log("No shape created - null shape returned.");
+                    }
+
+                },
+                function (error) {
+                    if (error) {
+                        console.log("Error in shape creation: " + error);
+                    } else {
+                        console.log("No shape created.");
+                    }
+                }
+            );
+        });
+
+        document.getElementById("new_ellipse").addEventListener("click", function(){
+            var properties = {
+                center: null,
+                majorRadius: 50e3,
+                minorRadius:40e3,
+                heading: 0,
+                attributes: attributes
+            };
+
+            shapeEditor.create(WorldWind.SurfaceEllipse, properties).then(
+                function (shape) {
+                    if (shape !== null) {
+                        shape.highlightAttributes = highlightAttributes;
+                        shapesLayer.addRenderable(shape);
+                        shapeEditor.edit(shape, config);
+                    } else {
+                        console.log("No shape created - null shape returned.");
+                    }
+
+                },
+                function (error) {
+                    if (error) {
+                        console.log("Error in shape creation: " + error);
+                    } else {
+                        console.log("No shape created.");
+                    }
+                }
+            );
+        });
+
+        document.getElementById("new_placemark").addEventListener("click", function(){
+            var properties = {
+                position: null,
+                eyeDistanceScaling: null,
+                attributes: placemarkAttributes
+            };
+
+            shapeEditor.create(WorldWind.Placemark, properties).then(
+                function (shape) {
+                    if (shape !== null) {
+                        shape.highlightAttributes = highlightPlacemarkAttributes;
+                        shapesLayer.addRenderable(shape);
+                        shapeEditor.edit(shape, config);
+                    } else {
+                        console.log("No shape created - null shape returned.");
+                    }
+
+                },
+                function (error) {
+                    if (error) {
+                        console.log("Error in shape creation: " + error);
+                    } else {
+                        console.log("No shape created.");
+                    }
+                }
+            );
+        });
+
+        document.getElementById("new_polygon").addEventListener("click", function(){
+            var properties = {
+                boundaries: null,
+                attributes: attributes
+            };
+
+            shapeEditor.create(WorldWind.SurfacePolygon, properties).then(
+                function (shape) {
+                    if (shape !== null) {
+                        shape.highlightAttributes = highlightAttributes;
+                        shapesLayer.addRenderable(shape);
+                        shapeEditor.edit(shape, config);
+                    } else {
+                        console.log("No shape created - null shape returned.");
+                    }
+
+                },
+                function (error) {
+                    if (error) {
+                        console.log("Error in shape creation: " + error);
+                    } else {
+                        console.log("No shape created.");
+                    }
+                }
+            );
+        });
+
+        document.getElementById("new_polyline").addEventListener("click", function(){
+            var properties = {
+                boundaries: null,
+                attributes: attributes
+            };
+
+            shapeEditor.create(WorldWind.SurfacePolyline, properties).then(
+                function (shape) {
+                    if (shape !== null) {
+                        shape.highlightAttributes = highlightAttributes;
+                        shapesLayer.addRenderable(shape);
+                        shapeEditor.edit(shape, config);
+                    } else {
+                        console.log("No shape created - null shape returned.");
+                    }
+
+                },
+                function (error) {
+                    if (error) {
+                        console.log("Error in shape creation: " + error);
+                    } else {
+                        console.log("No shape created.");
+                    }
+                }
+            );
+        });
+
+        document.getElementById("new_rectangle").addEventListener("click", function(){
+            var properties = {
+                center: null,
+                width: 50e3,
+                height: 40e3,
+                heading: 0,
+                attributes: attributes
+            };
+
+            shapeEditor.create(WorldWind.SurfaceRectangle, properties).then(
+                function (shape) {
+                    if (shape !== null) {
+                        shape.highlightAttributes = highlightAttributes;
+                        shapesLayer.addRenderable(shape);
+                        shapeEditor.edit(shape, config);
+                    } else {
+                        console.log("No shape created - null shape returned.");
+                    }
+
+                },
+                function (error) {
+                    if (error) {
+                        console.log("Error in shape creation: " + error);
+                    } else {
+                        console.log("No shape created.");
+                    }
+                }
+            );
+        });
+
+        document.getElementById("new_sector").addEventListener("click", function(){
+            var properties = {
+                _boundaries: null,
+                attributes: attributes
+            };
+
+            shapeEditor.create(WorldWind.SurfaceSector, properties).then(
+                function (shape) {
+                    if (shape !== null) {
+                        shape.highlightAttributes = highlightAttributes;
+                        shapesLayer.addRenderable(shape);
+                        shapeEditor.edit(shape, config);
+                    } else {
+                        console.log("No shape created - null shape returned.");
+                    }
+
+                },
+                function (error) {
+                    if (error) {
+                        console.log("Error in shape creation: " + error);
+                    } else {
+                        console.log("No shape created.");
+                    }
+                }
+            );
+        });
 
     }
 );

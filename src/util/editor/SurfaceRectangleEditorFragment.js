@@ -36,6 +36,9 @@ define([
 
         // Internal use only.
         SurfaceRectangleEditorFragment.prototype.canHandle = function (shape) {
+            if (shape instanceof Function) {
+                return shape.name === "SurfaceRectangle";
+            }
             return shape instanceof SurfaceRectangle;
         };
 
@@ -53,6 +56,11 @@ define([
         // Internal use only.
         SurfaceRectangleEditorFragment.prototype.getShapeCenter = function (shape) {
             return shape.center;
+        };
+
+        // Internal use only.
+        SurfaceRectangleEditorFragment.prototype.isRegularShape = function () {
+            return true;
         };
 
         // Internal use only.
