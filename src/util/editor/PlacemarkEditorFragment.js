@@ -36,6 +36,9 @@ define([
 
         // Internal use only.
         PlacemarkEditorFragment.prototype.canHandle = function (shape) {
+            if (shape instanceof Function) {
+                return shape.name === "Placemark";
+            }
             return shape instanceof Placemark;
         };
 
@@ -47,6 +50,11 @@ define([
         // Internal use only.
         PlacemarkEditorFragment.prototype.getShapeCenter = function (shape) {
             return shape.position;
+        };
+
+        // Internal use only.
+        PlacemarkEditorFragment.prototype.isRegularShape = function () {
+            return true;
         };
 
         // Internal use only.

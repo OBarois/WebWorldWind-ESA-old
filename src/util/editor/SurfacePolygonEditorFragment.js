@@ -44,6 +44,9 @@ define([
 
         // Internal use only.
         SurfacePolygonEditorFragment.prototype.canHandle = function (shape) {
+            if (shape instanceof Function) {
+                return shape.name === "SurfacePolygon";
+            }
             return shape instanceof SurfacePolygon;
         };
 
@@ -55,6 +58,30 @@ define([
         // Internal use only.
         SurfacePolygonEditorFragment.prototype.getShapeCenter = function (shape, globe) {
             return this.getCenterFromLocations(globe, shape.boundaries);
+        };
+
+        // Internal use only.
+        SurfacePolygonEditorFragment.prototype.isRegularShape = function () {
+            return false;
+        };
+
+        // Internal use only.
+        SurfacePolygonEditorFragment.prototype.initializeCreationControlElements = function (shape,
+                                                                                              controlPoints,
+                                                                                              moveControlPointAttributes) {
+            var locations = this.getLocations(shape);
+            this.currentHeading = 0;
+
+            this.moveControlPointAttributes = moveControlPointAttributes;
+
+            for (var i = 0, len = locations.length; i < len; i++) {
+                this.createControlPoint(
+                    controlPoints,
+                    moveControlPointAttributes,
+                    ShapeEditorConstants.LOCATION,
+                    i
+                );
+            }
         };
 
         // Internal use only.
@@ -102,6 +129,32 @@ define([
         };
 
         // Internal use only.
+        SurfacePolygonEditorFragment.prototype.updateCreationControlElements = function (shape,
+                                                                                          globe,
+                                                                                          controlPoints) {
+            var locations = this.getLocations(shape);
+
+            var lenControlPoints = controlPoints.length;
+            var lenLocations = locations.length;
+
+            for (var i = 0; i < lenLocations; i++) {
+                if (i >= lenControlPoints) {
+                    this.createControlPoint(
+                        controlPoints,
+                        this.moveControlPointAttributes,
+                        ShapeEditorConstants.LOCATION,
+                        i
+                    );
+                }
+                controlPoints[i].position = locations[i];
+            }
+
+            if (lenControlPoints > lenLocations) {
+                controlPoints.splice(lenLocations, lenControlPoints - lenLocations)
+            }
+        };
+
+        // Internal use only.
         SurfacePolygonEditorFragment.prototype.updateControlElements = function (shape,
                                                                                  globe,
                                                                                  controlPoints,
@@ -114,24 +167,26 @@ define([
             var rotationControlPoint = null;
 
             for (var i = lenControlPoints - 1; i > -1; i--) {
-                if (controlPoints[i].userProperties.purpose === ShapeEditorConstants.ROTATION) {
-                    rotationControlPoint = controlPoints[i];
+                if (controlPoints[i] !== null) {
+                    if (controlPoints[i].userProperties.purpose === ShapeEditorConstants.ROTATION) {
+                        rotationControlPoint = controlPoints[i];
 
-                    var polygonCenter = this.getCenterFromLocations(globe, locations);
-                    var polygonRadius = 1.2 * this.getAverageDistance(globe, polygonCenter, locations);
+                        var polygonCenter = this.getCenterFromLocations(globe, locations);
+                        var polygonRadius = 1.2 * this.getAverageDistance(globe, polygonCenter, locations);
 
-                    Location.greatCircleLocation(
-                        polygonCenter,
-                        this.currentHeading,
-                        polygonRadius,
-                        rotationControlPoint.position
-                    );
+                        Location.greatCircleLocation(
+                            polygonCenter,
+                            this.currentHeading,
+                            polygonRadius,
+                            rotationControlPoint.position
+                        );
 
-                    rotationControlPoint.userProperties.rotation = this.currentHeading;
+                        rotationControlPoint.userProperties.rotation = this.currentHeading;
 
-                    this.updateRotationAccessory(polygonCenter, rotationControlPoint.position, accessories);
-                } else {
-                    locationControlPoints.push(controlPoints[i]);
+                        this.updateRotationAccessory(polygonCenter, rotationControlPoint.position, accessories);
+                    } else {
+                        locationControlPoints.push(controlPoints[i]);
+                    }
                 }
 
                 controlPoints.pop();
@@ -191,7 +246,9 @@ define([
                 }
             }
 
-            controlPoints.push(rotationControlPoint);
+            if (rotationControlPoint !== null) {
+                controlPoints.push(rotationControlPoint);
+            }
         };
 
         // Internal use only.
@@ -391,6 +448,17 @@ define([
                 shape._stateId = SurfacePolygon.stateId++;
                 shape.stateKeyInvalid = true;
             }
+        };
+
+        // Internal use only.
+        SurfacePolygonEditorFragment.prototype.createNewVertex = function (shape, globe, position) {
+            var locations = shape.boundaries;
+
+            locations.push(new Location(position.latitude, position.longitude));
+
+            shape.resetBoundaries();
+            shape._stateId = SurfacePolygon.stateId++;
+            shape.stateKeyInvalid = true;
         };
 
         // Internal use only.

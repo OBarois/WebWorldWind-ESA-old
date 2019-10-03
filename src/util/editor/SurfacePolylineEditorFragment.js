@@ -44,6 +44,9 @@ define([
 
         //Internal use only. Intentionally not documented.
         SurfacePolylineEditorFragment.prototype.canHandle = function (shape) {
+            if (shape instanceof Function) {
+                return shape.name === "SurfacePolyline";
+            }
             return shape instanceof SurfacePolyline;
         };
 
@@ -55,6 +58,31 @@ define([
         //Internal use only. Intentionally not documented.
         SurfacePolylineEditorFragment.prototype.getShapeCenter = function (shape, globe) {
             return this.getCenterFromLocations(globe, shape.boundaries);
+        };
+
+        // Internal use only.
+        SurfacePolylineEditorFragment.prototype.isRegularShape = function () {
+            return false;
+        };
+
+        // Internal use only.
+        SurfacePolylineEditorFragment.prototype.initializeCreationControlElements = function (shape,
+                                                                                      controlPoints,
+                                                                                      moveControlPointAttributes) {
+            this.currentHeading = 0;
+
+            this.moveControlPointAttributes = moveControlPointAttributes;
+
+            var locations = shape.boundaries;
+
+            for (var i = 0, len = locations.length; i < len; i++) {
+                this.createControlPoint(
+                    controlPoints,
+                    moveControlPointAttributes,
+                    ShapeEditorConstants.LOCATION,
+                    i
+                );
+            }
         };
 
         // Internal use only.
@@ -99,8 +127,32 @@ define([
                         i
                     );
                 }
-            } else {
+            }
+        };
 
+        // Internal use only.
+        SurfacePolylineEditorFragment.prototype.updateCreationControlElements = function (shape,
+                                                                                          globe,
+                                                                                          controlPoints) {
+            var locations = shape.boundaries;
+
+            var lenControlPoints = controlPoints.length;
+            var lenLocations = locations.length;
+
+            for (var i = 0; i < lenLocations; i++) {
+                if (i >= lenControlPoints) {
+                    this.createControlPoint(
+                        controlPoints,
+                        this.moveControlPointAttributes,
+                        ShapeEditorConstants.LOCATION,
+                        i
+                    );
+                }
+                controlPoints[i].position = locations[i];
+            }
+
+            if (lenControlPoints > lenLocations) {
+                controlPoints.splice(lenLocations, lenControlPoints - lenLocations)
             }
         };
 
@@ -118,24 +170,26 @@ define([
 
 
             for (var i = lenControlPoints - 1; i > -1; i--) {
-                if (controlPoints[i].userProperties.purpose === ShapeEditorConstants.ROTATION) {
-                    rotationControlPoint = controlPoints[i];
+                if (controlPoints[i] !== null) {
+                    if (controlPoints[i].userProperties.purpose === ShapeEditorConstants.ROTATION) {
+                        rotationControlPoint = controlPoints[i];
 
-                    var polygonCenter = this.getCenterFromLocations(globe, locations);
-                    var polygonRadius = 1.2 * this.getAverageDistance(globe, polygonCenter, locations);
+                        var polygonCenter = this.getCenterFromLocations(globe, locations);
+                        var polygonRadius = 1.2 * this.getAverageDistance(globe, polygonCenter, locations);
 
-                    Location.greatCircleLocation(
-                        polygonCenter,
-                        this.currentHeading,
-                        polygonRadius,
-                        rotationControlPoint.position
-                    );
+                        Location.greatCircleLocation(
+                            polygonCenter,
+                            this.currentHeading,
+                            polygonRadius,
+                            rotationControlPoint.position
+                        );
 
-                    rotationControlPoint.userProperties.rotation = this.currentHeading;
+                        rotationControlPoint.userProperties.rotation = this.currentHeading;
 
-                    this.updateRotationAccessory(polygonCenter, rotationControlPoint.position, accessories);
-                } else {
-                    locationControlPoints.push(controlPoints[i]);
+                        this.updateRotationAccessory(polygonCenter, rotationControlPoint.position, accessories);
+                    } else {
+                        locationControlPoints.push(controlPoints[i]);
+                    }
                 }
 
                 controlPoints.pop();
@@ -177,7 +231,9 @@ define([
                 this.computeShadowPointLocations(shape, shadowControlPoints[i], locations[i], locations[i + 1]);
             }
 
-            controlPoints.push(rotationControlPoint);
+            if (rotationControlPoint !== null) {
+                controlPoints.push(rotationControlPoint);
+            }
         };
 
         // Internal use only.
@@ -279,6 +335,17 @@ define([
             } else {
                 locations.splice(nearestSegmentIndex, 0, nearestLocation);
             }
+
+            shape.resetBoundaries();
+            shape._stateId = SurfacePolyline.stateId++;
+            shape.stateKeyInvalid = true;
+        };
+
+        // Internal use only.
+        SurfacePolylineEditorFragment.prototype.createNewVertex = function (shape, globe, position) {
+            var locations = shape.boundaries;
+
+            locations.push(new Location(position.latitude, position.longitude));
 
             shape.resetBoundaries();
             shape._stateId = SurfacePolyline.stateId++;

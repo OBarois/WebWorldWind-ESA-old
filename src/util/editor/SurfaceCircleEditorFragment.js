@@ -36,6 +36,9 @@ define([
 
         // Internal use only.
         SurfaceCircleEditorFragment.prototype.canHandle = function (shape) {
+            if (shape instanceof Function) {
+                return shape.name === "SurfaceCircle";
+            }
             return shape instanceof SurfaceCircle;
         };
 
@@ -47,6 +50,11 @@ define([
         // Internal use only.
         SurfaceCircleEditorFragment.prototype.getShapeCenter = function (shape) {
             return shape.center;
+        };
+
+        // Internal use only.
+        SurfaceCircleEditorFragment.prototype.isRegularShape = function () {
+            return true;
         };
 
         // Internal use only.
