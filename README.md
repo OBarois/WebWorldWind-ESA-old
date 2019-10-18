@@ -18,8 +18,11 @@ The main differences are:
 - Zoom to mouse position behaviour
 - ArcBall (lookat) and FirstPerson (free) cameras
 - Service and layer for OpenSearch for EO
-- Editor for surface shapes
+- Creator and editor for surface shapes
 - Sentinel-2 Cloudless layer from EOX IT Services GmbH, see https://s2maps.eu/
+- Time-based visibility for renderables
+- Rotation of the globe like a ball once off its axis
+- Animated layer for gridded data
 - Various improvements and bug fixes
 
 If you are new to Web WorldWind, please start with the official release and documentation at https://worldwind.arc.nasa.gov/web/
