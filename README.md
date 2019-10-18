@@ -14,7 +14,7 @@ The main differences are:
 - Allow setting canvas element instead of ID
 - Improved Collada rendering (faster and larger models supported)
 - Intertial navigation effect on fling in the default WorldWindController
-- Enhanced Cartesian arithmetic
+- Enhanced cartesian arithmetic
 - Zoom to mouse position behaviour
 - ArcBall (lookat) and FirstPerson (free) cameras
 - Service and layer for OpenSearch for EO
@@ -28,6 +28,13 @@ The main differences are:
 If you are new to Web WorldWind, please start with the official release and documentation at https://worldwind.arc.nasa.gov/web/
 
 ## License
+
+These modifications were created in the scope of the Frame Contract for Social Media and Mobile Applications Development for EO Ground Segment and Mission Operations, European Space Agency (ESA) Contract Number 4000112250.
+They are released under Apache License 2.0 like the Web WorldWind itself.
+
+Consortium: Solenix Deutschland GmbH (Prime Contractor), TERRASIGNA SRL, GISAT SRO, Progressive Systems SRL, Qualteh JR SRL.
+
+**Web WorldWind itself is licensed as follows:**
 
 Copyright 2003-2006, 2009, 2017, United States Government, as represented by the Administrator of the
 National Aeronautics and Space Administration. All rights reserved.
