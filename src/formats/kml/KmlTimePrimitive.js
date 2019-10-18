@@ -42,7 +42,7 @@ define([
      * It returns range applicable to current time.
      * @returns {{from: Date, to: Date}}
      */
-    KmlTimePrimitive.prototype.timeRange = function() {
+    KmlTimePrimitive.prototype.kmlTimeRange = function() {
         var from, to;
         if(this.kmlBegin) {
             to = from = this.kmlBegin.valueOf();

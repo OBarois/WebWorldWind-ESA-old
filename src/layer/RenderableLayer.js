@@ -44,6 +44,13 @@ define([
              * @readonly
              */
             this.renderables = [];
+
+            /**
+             * An array with two elements:
+             * start time and end time of the visible range.
+             * @type {Date[]}
+             */
+            this.timeRange = [];
         };
 
         RenderableLayer.prototype = Object.create(Layer.prototype);
@@ -102,7 +109,10 @@ define([
 
             for (var i = 0, len = this.renderables.length; i < len; i++) {
                 try {
+                    var enabledByDefault = this.renderables[i].enabled;
+                    this.renderables[i].enabled = this.solveTimeVisibility(dc, this.renderables[i]);
                     this.renderables[i].render(dc);
+                    this.renderables[i].enabled = enabledByDefault;
                 } catch (e) {
                     Logger.logMessage(Logger.LEVEL_SEVERE, "RenderableLayer", "doRender",
                         "Error while rendering shape " + this.renderables[i].displayName + ".\n" + e.toString());
@@ -113,6 +123,28 @@ define([
             if (dc.orderedRenderables.length > numOrderedRenderablesAtStart) {
                 this.inCurrentFrame = true;
             }
+        };
+
+        /**
+         * Internal function for solving the visibility based on time.
+         * The element is visible when its whole range is inside the selected time range.
+         */
+        RenderableLayer.prototype.solveTimeVisibility = function (dc, renderable) {
+            var selectedTimeRange = dc.currentLayer.timeRange;
+
+            if (renderable.timeRange.length >= 2 && selectedTimeRange.length >= 2) {
+                var minTime = renderable.timeRange[0];
+                var maxTime = renderable.timeRange[1];
+                var minSelectedTime = selectedTimeRange[0];
+                var maxSelectedTime = selectedTimeRange[1];
+
+                if (minTime < minSelectedTime  ||
+                    maxTime > maxSelectedTime) {
+                    return false;
+                }
+            }
+
+            return renderable.enabled;
         };
 
         return RenderableLayer;
