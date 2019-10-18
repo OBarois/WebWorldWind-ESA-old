@@ -295,24 +295,22 @@ define([
     };
 
     /**
-     * Internal function for solving the time visibility. The element is visible when its whole range is inside the
-     * time range chosen by user.
+     * Internal function for solving the visibility based on time.
+     * The element is visible when its whole range is inside the selected time range.
      */
     KmlFeature.prototype.solveTimeVisibility = function (dc) {
-        var timeRangeOfFeature = this.kmlTimePrimitive && this.kmlTimePrimitive.timeRange();
+        var timeRangeOfFeature = this.kmlTimePrimitive && this.kmlTimePrimitive.kmlTimeRange();
 
-        if (dc.currentLayer.currentTimeInterval && timeRangeOfFeature) {
-            var from = dc.currentLayer.currentTimeInterval[0];
-            var to = dc.currentLayer.currentTimeInterval[1];
+        var selectedTimeRange = dc.currentLayer.timeRange;
 
-            if (
-                timeRangeOfFeature &&
-                (
-                    timeRangeOfFeature.from < from ||
-                    timeRangeOfFeature.from > to ||
-                    timeRangeOfFeature.to > to
-                )
-            ) {
+        if (timeRangeOfFeature && selectedTimeRange.length >= 2) {
+            var minTime = timeRangeOfFeature.from;
+            var maxTime = timeRangeOfFeature.to;
+            var minSelectedTime = selectedTimeRange[0];
+            var maxSelectedTime = selectedTimeRange[1];
+
+            if (minTime < minSelectedTime  ||
+                maxTime > maxSelectedTime) {
                 return false;
             }
         }

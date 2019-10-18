@@ -66,7 +66,7 @@ define([
             shape.render(dc, {
                 lastStyle: kmlOptions.lastStyle,
                 lastVisibility: self.enabled,
-                currentTimeInterval: kmlOptions.currentTimeInterval,
+                timeRange: kmlOptions.timeRange,
                 regionInvisible: kmlOptions.regionInvisible,
                 fileCache: kmlOptions.fileCache,
                 styleResolver: kmlOptions.styleResolver,

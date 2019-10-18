@@ -126,7 +126,7 @@ globe.
 var kmlFilePromise = new KmlFile('data/KML_Samples.kml', []);
 kmlFilePromise.then(function (kmlFile) {
     var renderableLayer = new WorldWind.RenderableLayer("Surface Shapes");
-    renderableLayer.currentTimeInterval = [
+    renderableLayer.timeRange = [
         new Date("Mon Aug 09 2015 12:10:10 GMT+0200 (Střední Evropa (letní čas))").valueOf(),
         new Date("Mon Aug 11 2015 12:10:10 GMT+0200 (Střední Evropa (letní čas))").valueOf()
     ];
@@ -148,7 +148,7 @@ Layer before the Layer itself is added to the globe.
 var kmlFilePromise = new KmlFile('data/KML_Samples.kmz', []);
 kmlFilePromise.then(function (kmlFile) {
     var renderableLayer = new WorldWind.RenderableLayer("Surface Shapes");
-    renderableLayer.currentTimeInterval = [
+    renderableLayer.timeRange = [
         new Date("Mon Aug 09 2015 12:10:10 GMT+0200 (Střední Evropa (letní čas))").valueOf(),
         new Date("Mon Aug 11 2015 12:10:10 GMT+0200 (Střední Evropa (letní čas))").valueOf()
     ];
