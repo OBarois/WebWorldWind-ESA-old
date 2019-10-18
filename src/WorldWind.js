@@ -22,6 +22,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         './geom/Angle',
         './shapes/Annotation',
         './shapes/AnnotationAttributes',
+        './ArcBallCamera',
         './util/measure/AreaMeasurer',
         './error/ArgumentError',
         './globe/AsterV2ElevationCoverage',
@@ -42,18 +43,22 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         './geom/BoundingBox',
         './gesture/ClickRecognizer',
         './formats/collada/ColladaLoader',
+        './formats/collada/ColladaScene',
         './util/Color',
         './shapes/Compass',
         './layer/CompassLayer',
         './layer/CoordinatesDisplayLayer',
         './util/Date',
         './layer/DigitalGlobeTiledImageLayer',
+        './render/DoubleBufferedFbo',
         './gesture/DragRecognizer',
         './render/DrawContext',
         './globe/EarthElevationModel',
         './globe/EarthRestElevationCoverage',
         './globe/ElevationCoverage',
         './globe/ElevationModel',
+        './FirstPersonCamera',
+        './gesture/FlingRecognizer',
         './util/Font',
         './util/FrameStatistics',
         './layer/FrameStatisticsLayer',
@@ -83,6 +88,9 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         './shaders/GpuProgram',
         './cache/GpuResourceCache',
         './shaders/GpuShader',
+        './layer/GriddedDataLayer',
+        './shaders/GridParticleProgram',
+        './shaders/GridParticleSimProgram',
         './shaders/GroundProgram',
         './util/HashMap',
         './layer/heatmap/HeatMapColoredTile',
@@ -185,6 +193,17 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         './util/NominatimGeocoder',
         './error/NotYetImplementedError',
         './util/Offset',
+        './ogc/openSearch/responseFormats/atomParser/OpenSearchAtomParser',
+        './ogc/openSearch/OpenSearchConstants',
+        './ogc/openSearch/descriptionDocument/OpenSearchDescriptionDocument',
+        './ogc/openSearch/responseFormats/atomParser/OpenSearchGeoRssParser',
+        './ogc/openSearch/OpenSearchNamespaces',
+        './ogc/openSearch/descriptionDocument/OpenSearchParameter',
+        './ogc/openSearch/responseFormats/OpenSearchParserRegistry',
+        './ogc/openSearch/OpenSearchRequest',
+        './ogc/openSearch/OpenSearchService',
+        './ogc/openSearch/descriptionDocument/OpenSearchUrl',
+        './ogc/openSearch/OpenSearchUtils',
         './layer/OpenStreetMapImageLayer',
         './gesture/PanRecognizer',
         './shapes/Path',
@@ -212,7 +231,9 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         './shapes/ScreenImage',
         './shapes/ScreenText',
         './geom/Sector',
+        './layer/SentinelCloudlessLayer',
         './shapes/ShapeAttributes',
+        './util/editor/ShapeEditor',
         './formats/shapefile/Shapefile',
         './layer/ShowTessellationLayer',
         './shaders/SkyProgram',
@@ -300,6 +321,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
               Angle,
               Annotation,
               AnnotationAttributes,
+              ArcBallCamera,
               AreaMeasurer,
               ArgumentError,
               AsterV2ElevationCoverage,
@@ -320,18 +342,22 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
               BoundingBox,
               ClickRecognizer,
               ColladaLoader,
+              ColladaScene,
               Color,
               Compass,
               CompassLayer,
               CoordinatesDisplayLayer,
               DateWW,
               DigitalGlobeTiledImageLayer,
+              DoubleBufferedFbo,
               DragRecognizer,
               DrawContext,
               EarthElevationModel,
               EarthRestElevationCoverage,
               ElevationCoverage,
               ElevationModel,
+              FirstPersonCamera,
+              FlingRecognizer,
               Font,
               FrameStatistics,
               FrameStatisticsLayer,
@@ -361,6 +387,9 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
               GpuProgram,
               GpuResourceCache,
               GpuShader,
+              GriddedDataLayer,
+              GridParticleProgram,
+              GridParticleSimProgram,
               GroundProgram,
               HashMap,
               HeatMapColoredTile,
@@ -463,6 +492,17 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
               NominatimGeocoder,
               NotYetImplementedError,
               Offset,
+              OpenSearchAtomParser,
+              OpenSearchConstants,
+              OpenSearchDescriptionDocument,
+              OpenSearchGeoRssParser,
+              OpenSearchNamespaces,
+              OpenSearchParameter,
+              OpenSearchParserRegistry,
+              OpenSearchRequest,
+              OpenSearchService,
+              OpenSearchUrl,
+              OpenSearchUtils,
               OpenStreetMapImageLayer,
               PanRecognizer,
               Path,
@@ -490,7 +530,9 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
               ScreenImage,
               ScreenText,
               Sector,
+              SentinelCloudlessLayer,
               ShapeAttributes,
+              ShapeEditor,
               Shapefile,
               ShowTessellationLayer,
               SkyProgram,
@@ -570,7 +612,8 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
               WWMath,
               WWMessage,
               WWUtil,
-              XmlDocument
+              XmlDocument,
+              WindBbox
     ) {
         "use strict";
         /**
@@ -815,6 +858,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         WorldWind['Angle'] = Angle;
         WorldWind['Annotation'] = Annotation;
         WorldWind['AnnotationAttributes'] = AnnotationAttributes;
+        WorldWind['ArcBallCamera'] = ArcBallCamera;
         WorldWind['AreaMeasurer'] = AreaMeasurer;
         WorldWind['ArgumentError'] = ArgumentError;
         WorldWind['AsterV2ElevationCoverage'] = AsterV2ElevationCoverage;
@@ -835,18 +879,22 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         WorldWind['BoundingBox'] = BoundingBox;
         WorldWind['ClickRecognizer'] = ClickRecognizer;
         WorldWind['ColladaLoader'] = ColladaLoader;
+        WorldWind['ColladaScene'] = ColladaScene;
         WorldWind['Color'] = Color;
         WorldWind['Compass'] = Compass;
         WorldWind['CompassLayer'] = CompassLayer;
         WorldWind['CoordinatesDisplayLayer'] = CoordinatesDisplayLayer;
         WorldWind['DateWW'] = DateWW;
         WorldWind['DigitalGlobeTiledImageLayer'] = DigitalGlobeTiledImageLayer;
+        WorldWind['DoubleBufferedFbo'] = DoubleBufferedFbo;
         WorldWind['DragRecognizer'] = DragRecognizer;
         WorldWind['DrawContext'] = DrawContext;
         WorldWind['EarthElevationModel'] = EarthElevationModel;
         WorldWind['EarthRestElevationCoverage'] = EarthRestElevationCoverage;
         WorldWind['ElevationCoverage'] = ElevationCoverage;
         WorldWind['ElevationModel'] = ElevationModel;
+        WorldWind['FirstPersonCamera'] = FirstPersonCamera;
+        WorldWind['FlingRecognizer'] = FlingRecognizer,
         WorldWind['Font'] = Font;
         WorldWind['FrameStatistics'] = FrameStatistics;
         WorldWind['FrameStatisticsLayer'] = FrameStatisticsLayer;
@@ -876,6 +924,9 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         WorldWind['GpuProgram'] = GpuProgram;
         WorldWind['GpuResourceCache'] = GpuResourceCache;
         WorldWind['GpuShader'] = GpuShader;
+        WorldWind['GriddedDataLayer'] = GriddedDataLayer;
+        WorldWind['GridParticleProgram'] = GridParticleProgram;
+        WorldWind['GridParticleSimProgram'] = GridParticleSimProgram;
         WorldWind['GroundProgram'] = GroundProgram;
         WorldWind['HashMap'] = HashMap;
         WorldWind['HeatMapColoredTile'] = HeatMapColoredTile;
@@ -978,6 +1029,17 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         WorldWind['NominatimGeocoder'] = NominatimGeocoder;
         WorldWind['NotYetImplementedError'] = NotYetImplementedError;
         WorldWind['Offset'] = Offset;
+        WorldWind['OpenSearchAtomParser'] = OpenSearchAtomParser;
+        WorldWind['OpenSearchConstants'] = OpenSearchConstants;
+        WorldWind['OpenSearchDescriptionDocument'] = OpenSearchDescriptionDocument;
+        WorldWind['OpenSearchGeoRssParser'] = OpenSearchGeoRssParser;
+        WorldWind['OpenSearchNamespaces'] = OpenSearchNamespaces;
+        WorldWind['OpenSearchParameter'] = OpenSearchParameter;
+        WorldWind['OpenSearchParserRegistry'] = OpenSearchParserRegistry;
+        WorldWind['OpenSearchRequest'] = OpenSearchRequest;
+        WorldWind['OpenSearchService'] = OpenSearchService;
+        WorldWind['OpenSearchUrl'] = OpenSearchUrl;
+        WorldWind['OpenSearchUtils'] = OpenSearchUtils;
         WorldWind['OpenStreetMapImageLayer'] = OpenStreetMapImageLayer;
         WorldWind['PanRecognizer'] = PanRecognizer;
         WorldWind['Path'] = Path;
@@ -1005,7 +1067,9 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         WorldWind['ScreenText'] = ScreenText;
         WorldWind['ScreenImage'] = ScreenImage;
         WorldWind['Sector'] = Sector;
+        WorldWind['SentinelCloudlessLayer'] = SentinelCloudlessLayer;
         WorldWind['ShapeAttributes'] = ShapeAttributes;
+        WorldWind['ShapeEditor'] = ShapeEditor;
         WorldWind['Shapefile'] = Shapefile;
         WorldWind['ShowTessellationLayer'] = ShowTessellationLayer;
         WorldWind['SkyProgram'] = SkyProgram;

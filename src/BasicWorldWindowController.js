@@ -19,12 +19,17 @@
  */
 define([
         './geom/Angle',
+        './ArcBallCamera',
         './error/ArgumentError',
         './gesture/ClickRecognizer',
         './gesture/DragRecognizer',
+        './gesture/FlingRecognizer',
         './gesture/GestureRecognizer',
+        './geom/Line',
+        './geom/Location',
         './util/Logger',
         './geom/Matrix',
+        './util/measure/MeasurerUtils',
         './gesture/PanRecognizer',
         './gesture/PinchRecognizer',
         './geom/Position',
@@ -37,12 +42,17 @@ define([
         './util/WWMath'
     ],
     function (Angle,
+              ArcBallCamera,
               ArgumentError,
               ClickRecognizer,
               DragRecognizer,
+              FlingRecognizer,
               GestureRecognizer,
+              Line,
+              Location,
               Logger,
               Matrix,
+              MeasurerUtils,
               PanRecognizer,
               PinchRecognizer,
               Position,
@@ -65,6 +75,18 @@ define([
          */
         var BasicWorldWindowController = function (worldWindow) {
             WorldWindowController.call(this, worldWindow); // base class checks for a valid worldWindow
+
+            /**
+             * Enables/disables the zoom to mouse effect.
+             * When used on a touch device the location of the mouse is the center between the touch points.
+             *
+             * When zooming in, the location of the mouse will move towards the center of the screen.
+             * When zooming out, the location of the mouse will away from the center of the screen.
+             *
+             * @type {Boolean}
+             * @default true
+             */
+            this.zoomToMouseEnabled = true;
 
             // Intentionally not documented.
             this.primaryDragRecognizer = new DragRecognizer(this.wwd, null);
@@ -113,12 +135,32 @@ define([
             // this.clickRecognizer.addListener(this);
 
             // Intentionally not documented.
+            this.flingRecognizer = new FlingRecognizer(this.wwd, null);
+            this.flingRecognizer.addListener(this);
+            this.flingRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
+            this.flingRecognizer.recognizeSimultaneouslyWith(this.panRecognizer);
+            this.flingRecognizer.recognizeSimultaneouslyWith(this.pinchRecognizer);
+            this.flingRecognizer.recognizeSimultaneouslyWith(this.rotationRecognizer);
+
+            // Intentionally not documented.
             this.beginPoint = new Vec2(0, 0);
             this.lastPoint = new Vec2(0, 0);
             this.beginHeading = 0;
             this.beginTilt = 0;
             this.beginRange = 0;
             this.lastRotation = 0;
+            this.pointerLocation = null;
+            this.dragDelta = new Vec2(0, 0);
+            this.dragLastLocation = new Location(0, 0);
+            this.flingAnimationId = -1;
+
+            this.beginIntersectionPoint = new Vec3(0, 0, 0);
+            this.lastIntersectionPoint = new Vec3(0, 0, 0);
+            this.beginIntersectionPosition = new Position(0, 0, 0);
+            this.lastIntersectionPosition = new Position(0, 0, 0);
+            this.rotationVector = new Vec3(0, 0, 0);
+            this.scratchRay = new Line(new Vec3(0, 0, 0), new Vec3(0, 0, 0));
+            this.scratchMatrix = Matrix.fromIdentity();
         };
 
         BasicWorldWindowController.prototype = Object.create(WorldWindowController.prototype);
@@ -126,6 +168,10 @@ define([
         // Intentionally not documented.
         BasicWorldWindowController.prototype.onGestureEvent = function (e) {
             var handled = WorldWindowController.prototype.onGestureEvent.call(this, e);
+
+            if (e.type === 'mousemove' || (e.pointerType === 'mouse' && e.type === 'pointermove')) {
+                this.pointerLocation = null;
+            }
 
             if (!handled) {
                 if (e.type === "wheel") {
@@ -147,11 +193,23 @@ define([
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.gestureStateChanged = function (recognizer) {
+            if (recognizer.state === WorldWind.BEGAN || recognizer.state === WorldWind.RECOGNIZED) {
+                this.cancelFlingAnimation();
+            }
+
+            var isArcBall = this.wwd.navigator.camera instanceof ArcBallCamera;
             if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
-                this.handlePanOrDrag(recognizer);
+                if (isArcBall) {
+                    this.handlePanOrDrag(recognizer);
+                }
+                else {
+                    this.handleSecondaryDrag(recognizer);
+                }
             }
             else if (recognizer === this.secondaryDragRecognizer) {
-                this.handleSecondaryDrag(recognizer);
+                if (isArcBall) {
+                    this.handleSecondaryDrag(recognizer);
+                }
             }
             else if (recognizer === this.pinchRecognizer) {
                 this.handlePinch(recognizer);
@@ -165,6 +223,9 @@ define([
             // else if (recognizer === this.clickRecognizer || recognizer === this.tapRecognizer) {
             //     this.handleClickOrTap(recognizer);
             // }
+            else if (recognizer === this.flingRecognizer) {
+                this.handleFling(recognizer);
+            }
         };
 
         // Intentionally not documented.
@@ -196,38 +257,116 @@ define([
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.handlePanOrDrag3D = function (recognizer) {
-            var state = recognizer.state,
-                tx = recognizer.translationX,
-                ty = recognizer.translationY;
+            var wwd = this.wwd;
+            var state = recognizer.state;
+            var x = recognizer.clientX;
+            var y = recognizer.clientY;
 
-            var navigator = this.wwd.navigator;
             if (state === WorldWind.BEGAN) {
-                this.lastPoint.set(0, 0);
-            } else if (state === WorldWind.CHANGED) {
-                // Convert the translation from screen coordinates to arc degrees. Use this navigator's range as a
-                // metric for converting screen pixels to meters, and use the globe's radius for converting from meters
-                // to arc degrees.
-                var canvas = this.wwd.canvas,
-                    globe = this.wwd.globe,
-                    globeRadius = WWMath.max(globe.equatorialRadius, globe.polarRadius),
-                    distance = WWMath.max(1, navigator.range),
-                    metersPerPixel = WWMath.perspectivePixelSize(canvas.clientWidth, canvas.clientHeight, distance),
-                    forwardMeters = (ty - this.lastPoint[1]) * metersPerPixel,
-                    sideMeters = -(tx - this.lastPoint[0]) * metersPerPixel,
-                    forwardDegrees = (forwardMeters / globeRadius) * Angle.RADIANS_TO_DEGREES,
-                    sideDegrees = (sideMeters / globeRadius) * Angle.RADIANS_TO_DEGREES;
-
-                // Apply the change in latitude and longitude to this navigator, relative to the current heading.
-                var sinHeading = Math.sin(navigator.heading * Angle.DEGREES_TO_RADIANS),
-                    cosHeading = Math.cos(navigator.heading * Angle.DEGREES_TO_RADIANS);
-
-                navigator.lookAtLocation.latitude += forwardDegrees * cosHeading - sideDegrees * sinHeading;
-                navigator.lookAtLocation.longitude += forwardDegrees * sinHeading + sideDegrees * cosHeading;
-                this.lastPoint.set(tx, ty);
-                this.applyLimits();
-                this.wwd.redraw();
+                var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(x, y));
+                if (!wwd.globe.intersectsLine(ray, this.beginIntersectionPoint)) {
+                    return;
+                }
+                wwd.globe.computePositionFromPoint(this.beginIntersectionPoint[0], this.beginIntersectionPoint[1], this.beginIntersectionPoint[2], this.beginIntersectionPosition);
+                this.beginPoint.set(x, y);
+                this.lastPoint.set(x, y);
+            }
+            else if (state === WorldWind.CHANGED) {
+                var didMove = this.move3D(x, y);
+                if (didMove) {
+                    this.beginPoint.copy(this.lastPoint);
+                    this.lastPoint.set(x, y);
+                    this.applyLimits();
+                    this.dragDelta.set(
+                        this.dragLastLocation.latitude - wwd.navigator.lookAtLocation.latitude,
+                        Angle.normalizedDegreesLongitude(
+                            this.dragLastLocation.longitude - wwd.navigator.lookAtLocation.longitude
+                        )
+                    );
+                    this.dragLastLocation.copy(wwd.navigator.lookAtLocation);
+                    wwd.redraw();
+                }
             }
         };
+
+        // Intentionally not documented.
+        BasicWorldWindowController.prototype.move3D = function(x, y) {
+            var wwd = this.wwd;
+            
+            var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(x, y));
+            if (!wwd.globe.intersectsLine(ray, this.lastIntersectionPoint)) {
+                return false;
+            }
+            wwd.globe.computePositionFromPoint(this.lastIntersectionPoint[0], this.lastIntersectionPoint[1], this.lastIntersectionPoint[2], this.lastIntersectionPosition);
+
+            if (this.isSphereRotation(this.lastIntersectionPosition)) {
+                var rotationAngle = this.computeRotationVectorAndAngle(this.beginIntersectionPoint, this.lastIntersectionPoint, this.rotationVector);
+                var isFling = false;
+                return this.rotateShpere(this.rotationVector, rotationAngle, isFling);
+            }
+            else {
+                var deltaLat = this.lastIntersectionPosition.latitude - this.beginIntersectionPosition.latitude;
+                var deltaLon = this.lastIntersectionPosition.longitude - this.beginIntersectionPosition.longitude;
+                var lookAtLocation = wwd.navigator.lookAtLocation;
+                lookAtLocation.latitude -= deltaLat;
+                lookAtLocation.longitude -= deltaLon;
+                return true;
+            }
+        };
+
+        // Intentionally not documented.
+        BasicWorldWindowController.prototype.isSphereRotation = function (lastIntersectionPosition) {
+            var looAtLatitude = this.wwd.navigator.lookAtLocation.latitude; 
+            var heading = this.wwd.navigator.heading;
+            return (heading !== 0 || Math.abs(looAtLatitude) > 75 || Math.abs(lastIntersectionPosition.latitude) > 75);
+        };
+
+        // Intentionally not documented.
+        BasicWorldWindowController.prototype.computeRotationVectorAndAngle = function (vec1, vec2, rotationVector) {
+            var angleRad = MeasurerUtils.angleBetweenVectors(vec1, vec2);
+            var angle = angleRad * Angle.RADIANS_TO_DEGREES;
+            rotationVector.copy(vec1);
+            rotationVector.cross(vec2);
+            rotationVector.normalize();
+            return angle;
+        };
+
+        // Intentionally not documented.
+        BasicWorldWindowController.prototype.rotateShpere = function (rotationVector, angle, isFling) {
+            if (!isFinite(angle) || !isFinite(rotationVector[0]) || !isFinite(rotationVector[1]) || !isFinite(rotationVector[2])) {
+                return false;
+            }
+
+            var wwd = this.wwd;
+            var navigator = wwd.navigator;
+            var viewMatrix = this.scratchMatrix;
+            var altitude = navigator.lookAtLocation.altitude;
+            var tilt = navigator.tilt;
+            
+            navigator.tilt = 0;
+            wwd.computeViewingTransform(null, viewMatrix);
+            viewMatrix.multiplyByRotation(rotationVector[0], rotationVector[1], rotationVector[2], angle);
+
+            viewMatrix.extractEyePoint(this.scratchRay.origin);
+            viewMatrix.extractForwardVector(this.scratchRay.direction);
+            if (!wwd.globe.intersectsLine(this.scratchRay, this.lastIntersectionPoint)) {
+                navigator.tilt = tilt;
+                return false;
+            }
+
+            var params = viewMatrix.extractViewingParameters(this.lastIntersectionPoint, navigator.roll, wwd.globe, {});
+            if (!isFling && Math.abs(navigator.heading) < 5 && Math.abs(navigator.lookAtLocation.latitude < 70) && Math.abs(this.lastIntersectionPosition.latitude) < 70) {
+                navigator.heading = Math.round(params.heading);
+            }
+            else {
+                navigator.heading = params.heading;
+            }
+            navigator.lookAtLocation.copy(params.origin);
+            navigator.lookAtLocation.altitude = altitude;
+            navigator.tilt = tilt;
+
+            return true;
+        }
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.handlePanOrDrag2D = function (recognizer) {
@@ -242,50 +381,212 @@ define([
                 this.beginPoint.set(x, y);
                 this.lastPoint.set(x, y);
             } else if (state === WorldWind.CHANGED) {
-                var x1 = this.lastPoint[0],
-                    y1 = this.lastPoint[1],
-                    x2 = this.beginPoint[0] + tx,
-                    y2 = this.beginPoint[1] + ty;
+                this.move2D(tx, ty);
+            }
+        };
 
-                this.lastPoint.set(x2, y2);
+        BasicWorldWindowController.prototype.move2D = function (tx, ty) {
+            var navigator = this.wwd.navigator;
+            var x1 = this.lastPoint[0],
+                y1 = this.lastPoint[1],
+                x2 = this.beginPoint[0] + tx,
+                y2 = this.beginPoint[1] + ty;
 
-                var globe = this.wwd.globe,
-                    ray = this.wwd.rayThroughScreenPoint(this.wwd.canvasCoordinates(x1, y1)),
-                    point1 = new Vec3(0, 0, 0),
-                    point2 = new Vec3(0, 0, 0),
-                    origin = new Vec3(0, 0, 0);
+            this.lastPoint.set(x2, y2);
 
-                if (!globe.intersectsLine(ray, point1)) {
+            var globe = this.wwd.globe,
+                ray = this.wwd.rayThroughScreenPoint(this.wwd.canvasCoordinates(x1, y1)),
+                point1 = new Vec3(0, 0, 0),
+                point2 = new Vec3(0, 0, 0),
+                origin = new Vec3(0, 0, 0);
+
+            if (!globe.intersectsLine(ray, point1)) {
+                return;
+            }
+
+            ray = this.wwd.rayThroughScreenPoint(this.wwd.canvasCoordinates(x2, y2));
+            if (!globe.intersectsLine(ray, point2)) {
+                return;
+            }
+
+            // Transform the original navigator state's modelview matrix to account for the gesture's change.
+            var modelview = Matrix.fromIdentity();
+            this.wwd.computeViewingTransform(null, modelview);
+            modelview.multiplyByTranslation(point2[0] - point1[0], point2[1] - point1[1], point2[2] - point1[2]);
+
+            // Compute the globe point at the screen center from the perspective of the transformed navigator state.
+            modelview.extractEyePoint(ray.origin);
+            modelview.extractForwardVector(ray.direction);
+            if (!globe.intersectsLine(ray, origin)) {
+                return;
+            }
+
+            // Convert the transformed modelview matrix to a set of navigator properties, then apply those
+            // properties to this navigator.
+            var params = modelview.extractViewingParameters(origin, navigator.roll, globe, {});
+            navigator.lookAtLocation.copy(params.origin);
+            navigator.range = params.range;
+            navigator.heading = params.heading;
+            navigator.tilt = params.tilt;
+            navigator.roll = params.roll;
+            this.applyLimits();
+            this.wwd.redraw();
+
+            this.dragDelta.set(x1 - x2, y1 - y2);
+            this.dragLastLocation.copy(navigator.lookAtLocation);
+        };
+
+        // Intentionally not documented.
+        BasicWorldWindowController.prototype.handleFling = function (recognizer) {
+            if (this.wwd.globe.is2D()) {
+                this.handleFling2D(recognizer);
+            } else {
+                this.handleFling3D(recognizer);
+            }
+        };
+
+        BasicWorldWindowController.prototype.handleFling2D = function (recognizer) {
+            if (recognizer.state === WorldWind.RECOGNIZED) {
+                var wwd = this.wwd;
+                var navigator = wwd.navigator;
+
+                var animationDuration = 1500; // ms
+
+                this.beginPoint.copy(this.lastPoint);
+
+                // Last location set by this animation
+                var lastLocation = new Location();
+                lastLocation.copy(this.dragLastLocation);
+
+                // Start time of this animation
+                var startTime = new Date();
+
+                var beginTx = this.dragDelta[0];
+                var beginTy = this.dragDelta[1];
+                var tx = beginTx;
+                var ty = beginTy;
+
+                // Animation Loop
+                var controller = this;
+                var animate = function () {
+                    controller.flingAnimationId = -1;
+
+                    if (!lastLocation.equals(navigator.lookAtLocation)) {
+                        // The navigator was changed externally. Aborting the animation.
+                        return;
+                    }
+
+                    // Compute the delta to apply using a sinusoidal out easing
+                    var elapsed = (new Date() - startTime) / animationDuration;
+                    elapsed = elapsed > 1 ? 1 : elapsed;
+                    var value = Math.sin(elapsed * Math.PI / 2);
+
+                    tx -= beginTx - beginTx * value;
+                    ty -= beginTy - beginTy * value;
+
+                    controller.move2D(tx, ty);
+
+                    // Save the new current lookAt location
+                    lastLocation.copy(navigator.lookAtLocation);
+
+                    // If we haven't reached the animation duration, request a new frame
+                    if (elapsed < 1) {
+                        controller.flingAnimationId = requestAnimationFrame(animate);
+                    }
+                };
+
+                this.flingAnimationId = requestAnimationFrame(animate);
+            }
+        };
+
+        // Intentionally not documented.
+        BasicWorldWindowController.prototype.handleFling3D = function (recognizer) {
+            if (recognizer.state === WorldWind.RECOGNIZED) {
+                var navigator = this.wwd.navigator;
+
+                var animationDuration = 1500; // ms
+
+                // Initial delta at the beginning of this animation
+                var initialDelta = new Vec2();
+                initialDelta.copy(this.dragDelta);
+
+                // Last location set by this animation
+                var lastLocation = new Location();
+                lastLocation.copy(this.dragLastLocation);
+
+                var wwd = this.wwd;
+                var rotationAngle = 0;
+
+                var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(this.lastPoint[0], this.lastPoint[1]));
+                if (!wwd.globe.intersectsLine(ray, this.lastIntersectionPoint)) {
                     return;
                 }
+                wwd.globe.computePositionFromPoint(this.lastIntersectionPoint[0], this.lastIntersectionPoint[1], this.lastIntersectionPoint[2], this.lastIntersectionPosition);
 
-                ray = this.wwd.rayThroughScreenPoint(this.wwd.canvasCoordinates(x2, y2));
-                if (!globe.intersectsLine(ray, point2)) {
-                    return;
+                var shouldUseSphereRotation = this.isSphereRotation(this.lastIntersectionPosition);
+                if (shouldUseSphereRotation) {
+                    var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(this.beginPoint[0], this.beginPoint[1]));
+                    if (!wwd.globe.intersectsLine(ray, this.beginIntersectionPoint)) {
+                        return;
+                    }
+
+                    rotationAngle = this.computeRotationVectorAndAngle(this.beginIntersectionPoint, this.lastIntersectionPoint, this.rotationVector);
+                    if (!isFinite(rotationAngle) || !isFinite(this.rotationVector[0]) || !isFinite(this.rotationVector[1]) || !isFinite(this.rotationVector[2])) {
+                        return;
+                    }
                 }
 
-                // Transform the original navigator state's modelview matrix to account for the gesture's change.
-                var modelview = Matrix.fromIdentity();
-                this.wwd.computeViewingTransform(null, modelview);
-                modelview.multiplyByTranslation(point2[0] - point1[0], point2[1] - point1[1], point2[2] - point1[2]);
+                // Start time of this animation
+                var startTime = new Date();
 
-                // Compute the globe point at the screen center from the perspective of the transformed navigator state.
-                modelview.extractEyePoint(ray.origin);
-                modelview.extractForwardVector(ray.direction);
-                if (!globe.intersectsLine(ray, origin)) {
-                    return;
-                }
+                // Animation Loop
+                var controller = this;
+                var animate = function () {
+                    controller.flingAnimationId = -1;
 
-                // Convert the transformed modelview matrix to a set of navigator properties, then apply those
-                // properties to this navigator.
-                var params = modelview.extractViewingParameters(origin, navigator.roll, globe, {});
-                navigator.lookAtLocation.copy(params.origin);
-                navigator.range = params.range;
-                navigator.heading = params.heading;
-                navigator.tilt = params.tilt;
-                navigator.roll = params.roll;
-                this.applyLimits();
-                this.wwd.redraw();
+                    if (!lastLocation.equals(navigator.lookAtLocation)) {
+                        // The navigator was changed externally. Aborting the animation.
+                        return;
+                    }
+
+                    // Compute the delta to apply using a sinusoidal out easing
+                    var elapsed = (new Date() - startTime) / animationDuration;
+                    elapsed = elapsed > 1 ? 1 : elapsed;
+                    var value = Math.sin(elapsed * Math.PI / 2);
+
+                    if (shouldUseSphereRotation) {
+                        var angle = rotationAngle * (1 - value);
+                        var isFling = true;
+                        controller.rotateShpere(controller.rotationVector, angle, isFling);
+                    }
+                    else {
+                        var deltaLatitude = initialDelta[0] - initialDelta[0] * value;
+                        var deltaLongitude = initialDelta[1] - initialDelta[1] * value;
+                        navigator.lookAtLocation.latitude -= deltaLatitude;
+                        navigator.lookAtLocation.longitude -= deltaLongitude;
+                    }
+
+                    controller.applyLimits();
+                    controller.wwd.redraw();
+
+                    // Save the new current lookAt location
+                    lastLocation.copy(navigator.lookAtLocation);
+
+                    // If we haven't reached the animation duration, request a new frame
+                    if (elapsed < 1) {
+                        controller.flingAnimationId = requestAnimationFrame(animate);
+                    }
+                };
+
+                this.flingAnimationId = requestAnimationFrame(animate);
+            }
+        };
+
+        // Intentionally not documented.
+        BasicWorldWindowController.prototype.cancelFlingAnimation = function () {
+            if (this.flingAnimationId !== -1) {
+                cancelAnimationFrame(this.flingAnimationId);
+                this.flingAnimationId = -1;
             }
         };
 
@@ -321,11 +622,16 @@ define([
 
             if (state === WorldWind.BEGAN) {
                 this.beginRange = navigator.range;
+                this.pointerLocation = null;
             } else if (state === WorldWind.CHANGED) {
                 if (scale !== 0) {
+                    var newRange = this.beginRange / scale;
+                    var amount =  newRange / navigator.range;
+                    this.moveZoom(recognizer.clientX, recognizer.clientY, amount);
+
                     // Apply the change in pinch scale to this navigator's range, relative to the range when the gesture
                     // began.
-                    navigator.range = this.beginRange / scale;
+                    navigator.range = newRange;
                     this.applyLimits();
                     this.wwd.redraw();
                 }
@@ -372,6 +678,8 @@ define([
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.handleWheelEvent = function (event) {
+            this.cancelFlingAnimation();
+
             var navigator = this.wwd.navigator;
             // Normalize the wheel delta based on the wheel delta mode. This produces a roughly consistent delta across
             // browsers and input devices.
@@ -389,43 +697,82 @@ define([
             // positive or negative, respectfully.
             var scale = 1 + (normalizedDelta / 1000);
 
+            this.moveZoom(event.clientX, event.clientY, scale);
+
             // Apply the scale to this navigator's properties.
             navigator.range *= scale;
             this.applyLimits();
             this.wwd.redraw();
         };
 
+        // Intentionally not documented.
+        BasicWorldWindowController.prototype.locationAtPickPoint = function (x, y) {
+            var coordinates = this.wwd.canvasCoordinates(x, y);
+            var pickList = this.wwd.pickTerrain(coordinates);
+
+            for (var i = 0; i < pickList.objects.length; i++) {
+                var pickedObject = pickList.objects[i];
+                if (pickedObject.isTerrain) {
+                    var pickedPosition = pickedObject.position;
+                    if (pickedPosition) {
+                        return new Location(pickedPosition.latitude, pickedPosition.longitude);
+                    }
+                }
+            }
+        };
+
+        // Intentionally not documented.
+        BasicWorldWindowController.prototype.moveZoom = function (x, y, amount) {
+            if (!this.zoomToMouseEnabled) {
+                return;
+            }
+
+            if (amount === 1) {
+                return;
+            }
+
+            if (!this.pointerLocation) {
+                this.pointerLocation = this.locationAtPickPoint(x, y);
+            }
+
+            if (!this.pointerLocation) {
+                return;
+            }
+
+            var lookAtLocation = this.wwd.navigator.lookAtLocation;
+            var location;
+
+            if (amount < 1) {
+                var distanceRemaining = Location.greatCircleDistance(lookAtLocation,
+                    this.pointerLocation) * this.wwd.globe.equatorialRadius;
+
+                if (distanceRemaining <= 50000) {
+                    location = this.pointerLocation;
+                }
+                else {
+                    location = Location.interpolateGreatCircle(amount, this.pointerLocation,
+                        lookAtLocation, new Location(0, 0));
+                }
+            }
+            else {
+                var intermediateLocation = Location.interpolateGreatCircle(1 / amount, this.pointerLocation,
+                    lookAtLocation, new Location(0, 0));
+
+                var distanceRadians = Location.greatCircleDistance(lookAtLocation, intermediateLocation);
+
+                var greatCircleAzimuthDegrees = Location.greatCircleAzimuth(lookAtLocation, intermediateLocation);
+
+                location = Location.greatCircleLocation(lookAtLocation, greatCircleAzimuthDegrees - 180,
+                    distanceRadians, new Location(0, 0));
+            }
+
+            lookAtLocation.latitude = location.latitude;
+            lookAtLocation.longitude = location.longitude;
+        };
+
         // Documented in super-class.
         BasicWorldWindowController.prototype.applyLimits = function () {
-            var navigator = this.wwd.navigator;
-
-            // Clamp latitude to between -90 and +90, and normalize longitude to between -180 and +180.
-            navigator.lookAtLocation.latitude = WWMath.clamp(navigator.lookAtLocation.latitude, -90, 90);
-            navigator.lookAtLocation.longitude = Angle.normalizedDegreesLongitude(navigator.lookAtLocation.longitude);
-
-            // Clamp range to values greater than 1 in order to prevent degenerating to a first-person navigator when
-            // range is zero.
-            navigator.range = WWMath.clamp(navigator.range, 1, Number.MAX_VALUE);
-
-            // Normalize heading to between -180 and +180.
-            navigator.heading = Angle.normalizedDegrees(navigator.heading);
-
-            // Clamp tilt to between 0 and +90 to prevent the viewer from going upside down.
-            navigator.tilt = WWMath.clamp(navigator.tilt, 0, 90);
-
-            // Normalize heading to between -180 and +180.
-            navigator.roll = Angle.normalizedDegrees(navigator.roll);
-
-            // Apply 2D limits when the globe is 2D.
-            if (this.wwd.globe.is2D() && navigator.enable2DLimits) {
-                // Clamp range to prevent more than 360 degrees of visible longitude. Assumes a 45 degree horizontal
-                // field of view.
-                var maxRange = 2 * Math.PI * this.wwd.globe.equatorialRadius;
-                navigator.range = WWMath.clamp(navigator.range, 1, maxRange);
-
-                // Force tilt to 0 when in 2D mode to keep the viewer looking straight down.
-                navigator.tilt = 0;
-            }
+            this.wwd.navigator.camera.applyLimits();
         };
 
         return BasicWorldWindowController;

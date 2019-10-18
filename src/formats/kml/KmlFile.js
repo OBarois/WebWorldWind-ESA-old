@@ -127,7 +127,7 @@ define([
             shape.render(dc, {
                 lastStyle: kmlOptions.lastStyle || null,
                 lastVisibility: kmlOptions.lastVisibility || null,
-                currentTimeInterval: kmlOptions.currentTimeInterval || null,
+                timeRange: kmlOptions.timeRange || null,
                 regionInvisible: kmlOptions.regionInvisible || null,
                 fileCache: self._fileCache,
                 styleResolver: self._styleResolver,

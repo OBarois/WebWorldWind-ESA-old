@@ -64,6 +64,13 @@ define([
              * @default An empty object
              */
             this.userProperties = {};
+
+            /**
+             * An array with two elements:
+             * start time and end time of the visible range.
+             * @type {Date[]}
+             */
+            this.timeRange = [];
         };
 
         /**

@@ -29,7 +29,9 @@ define(['../util/AbsentResourceList',
         '../cache/MemoryCache',
         '../geom/Sector',
         '../util/Tile',
-        '../util/WWMath'],
+        '../util/WWMath',
+        '../util/WWUtil'
+    ],
     function (AbsentResourceList,
               Angle,
               ArgumentError,
@@ -42,7 +44,8 @@ define(['../util/AbsentResourceList',
               MemoryCache,
               Sector,
               Tile,
-              WWMath) {
+              WWMath,
+              WWUtil) {
         "use strict";
         /**
          * Constructs a TiledElevationCoverage
@@ -318,7 +321,7 @@ define(['../util/AbsentResourceList',
                 }
             }
 
-            return !result.includes(NaN); // true if the result array is fully populated.
+            return !WWUtil.arrayIncludes(result, NaN); // true if the result array is fully populated.
         };
 
         // Internal. Returns elevations for a grid assuming pixel-is-area.
@@ -354,7 +357,7 @@ define(['../util/AbsentResourceList',
                 }
             }
 
-            return !result.includes(NaN); // true if the result array is fully populated.
+            return !WWUtil.arrayIncludes(result, NaN); // true if the result array is fully populated.
         };
 
         // Internal. Returns an elevation for a location assuming pixel-is-area.

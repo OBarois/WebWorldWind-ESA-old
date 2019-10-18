@@ -1,47 +1,40 @@
-<img src="https://worldwind.arc.nasa.gov/img/nasa-logo.svg" height="100"/>
+# Web WorldWind (ESA Custom Build)
 
-# Web WorldWind
+This is a custom build of Web WorldWind, which includes features not yet part of an official release from the project.
+It is intended primarily for ESA projects.
 
-## NASA Renews Commitment to WorldWind
-WorldWind has received renewed commitment from NASA for continued development and support.  NASA will continue to release updates to the WorldWind SDKs, and will continue to make the WorldWind Servers accessible for all Users.  We plan to make an announcement soon regarding a path forward for improved support of the WorldWind User & Developer communities.
+The main differences are:
+- Reader for WKT
+- Reader for AAIGrid data
+- Exporter for WKT
+- Exporter for GeoJSON
+- HeatMap Layer
+- New API for elevation data
+- Support for embedded resources in KMZ
+- Allow setting canvas element instead of ID
+- Improved Collada rendering (faster and larger models supported)
+- Intertial navigation effect on fling in the default WorldWindController
+- Enhanced cartesian arithmetic
+- Zoom to mouse position behaviour
+- ArcBall (lookat) and FirstPerson (free) cameras
+- Service and layer for OpenSearch for EO
+- Creator and editor for surface shapes
+- Sentinel-2 Cloudless layer from EOX IT Services GmbH, see https://s2maps.eu/
+- Time-based visibility for renderables
+- Rotation of the globe like a ball once off its axis
+- Animated layer for gridded data
+- Various improvements and bug fixes
 
-If you have questions and/or concerns, please feel free to email at:
-
-worldwind-info@lists.nasa.gov
-
-[![Build Status](https://travis-ci.com/NASAWorldWind/WebWorldWind.svg?branch=develop)](https://travis-ci.com/NASAWorldWind/WebWorldWind)
-
-3D virtual globe API in JavaScript for the web, developed by NASA. The European Space Agency has provided valuable
-contributions to this platform since 2015. Web WorldWind provides a geographic context, complete with terrain, and a
-collection for shapes for displaying and interacting with geographic or geo-located information in 3D and 2D in any
-modern web browser. High-resolution terrain and imagery is retrieved from remote servers automatically as needed, while
-enabling developers to include their own custom terrain and imagery.
-
-- [worldwind.arc.nasa.gov](https://worldwind.arc.nasa.gov) has setup instructions, developers guides, API documentation and more
-- [Forum](https://forum.worldwindcentral.com) provides help from the WorldWind community
-- [WebStorm](https://www.jetbrains.com/webstorm) is used by the NASA WorldWind development team
-
-## Get Started
-
-The Web WorldWind [Developer's Guide](https://worldwind.arc.nasa.gov/web) has a complete description of Web WorldWind's
-functionality. You'll also find there links to many Web WorldWind resources, including a user guide. The latest
-Web WorldWind release provides many simple examples showing how to use all of Web WorldWind's functionality.
-
-## Building
-
-[Install NodeJS](https://nodejs.org). The build is known to work with Node.js 10.15.3 LTS and 11.12.0.
-
-- `npm install` downloads WorldWind's dependencies
-
-- `npm run build` builds everything
-
-- `npm run doc` generates the WorldWind API documentation
-
-- `npm run test` runs WorldWind's unit tests
-
-- `npm run test:watch` automatically runs WorldWind's unit tests when source code changes
+If you are new to Web WorldWind, please start with the official release and documentation at https://worldwind.arc.nasa.gov/web/
 
 ## License
+
+These modifications were created in the scope of the Frame Contract for Social Media and Mobile Applications Development for EO Ground Segment and Mission Operations, European Space Agency (ESA) Contract Number 4000112250.
+They are released under Apache License 2.0 like the Web WorldWind itself.
+
+Consortium: Solenix Deutschland GmbH (Prime Contractor), TERRASIGNA SRL, GISAT SRO, Progressive Systems SRL, Qualteh JR SRL.
+
+**Web WorldWind itself is licensed as follows:**
 
 Copyright 2003-2006, 2009, 2017, United States Government, as represented by the Administrator of the
 National Aeronautics and Space Administration. All rights reserved.
