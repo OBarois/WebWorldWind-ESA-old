@@ -604,6 +604,9 @@ define(['../../error/ArgumentError',
                 if (configuration && configuration.userProperties) {
                     placemark.userProperties = configuration.userProperties;
                 }
+                if (configuration && configuration.timeRange) {
+                    placemark.timeRange = configuration.timeRange;
+                }
                 layer.addRenderable(placemark);
             }
         };
@@ -663,6 +666,9 @@ define(['../../error/ArgumentError',
                     }
                     if (configuration && configuration.userProperties) {
                         placemark.userProperties = configuration.userProperties;
+                    }
+                    if (configuration && configuration.timeRange) {
+                        placemark.timeRange = configuration.timeRange;
                     }
                     layer.addRenderable(placemark);
                 }
@@ -726,6 +732,9 @@ define(['../../error/ArgumentError',
                 }
                 if (configuration && configuration.userProperties) {
                     shape.userProperties = configuration.userProperties;
+                }
+                if (configuration && configuration.timeRange) {
+                    shape.timeRange = configuration.timeRange;
                 }
                 layer.addRenderable(shape);
             }
@@ -791,6 +800,9 @@ define(['../../error/ArgumentError',
                     }
                     if (configuration && configuration.userProperties) {
                         shape.userProperties = configuration.userProperties;
+                    }
+                    if (configuration && configuration.timeRange) {
+                        shape.timeRange = configuration.timeRange;
                     }
                     layer.addRenderable(shape);
                 }
@@ -860,6 +872,9 @@ define(['../../error/ArgumentError',
                     if (configuration && configuration.userProperties) {
                         shape.userProperties = configuration.userProperties;
                     }
+                    if (configuration && configuration.timeRange) {
+                        shape.timeRange = configuration.timeRange;
+                    }
                     layer.addRenderable(shape);
             }
         };
@@ -928,6 +943,9 @@ define(['../../error/ArgumentError',
                     }
                     if (configuration && configuration.userProperties) {
                         shape.userProperties = configuration.userProperties;
+                    }
+                    if (configuration && configuration.timeRange) {
+                        shape.timeRange = configuration.timeRange;
                     }
                     layer.addRenderable(shape);
                 }

@@ -175,6 +175,9 @@ define([
         objects.forEach(function(object){
             object.shapes().forEach(function(shape){
                 var configuration = shapeConfigurationCallback(object);
+                if (configuration && configuration.name) {
+                    shape.displayName = configuration.name;
+                }
                 if(configuration && configuration.attributes) {
                     shape.attributes = configuration.attributes;
                 }
@@ -186,6 +189,9 @@ define([
                 }
                 if(configuration && configuration.userProperties) {
                     shape.userProperties = configuration.userProperties;
+                }
+                if(configuration && configuration.timeRange) {
+                    shape.timeRange = configuration.timeRange;
                 }
                 shapes.push(shape);
             });

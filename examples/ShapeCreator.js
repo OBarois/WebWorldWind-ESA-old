@@ -35,7 +35,7 @@ requirejs(['./WorldWindShim',
          * Added imagery layers.
          */
         var layers = [
-            {layer: new WorldWind.SentinelCloudlessLayer(), enabled: true},
+            {layer: new WorldWind.Sentinel2CloudlessLayer(), enabled: true},
             {layer: new WorldWind.CompassLayer(), enabled: true},
             {layer: new WorldWind.CoordinatesDisplayLayer(wwd), enabled: true},
             {layer: new WorldWind.ViewControlsLayer(wwd), enabled: true}

@@ -25,7 +25,16 @@ The main differences are:
 - Animated layer for gridded data
 - Various improvements and bug fixes
 
+Examples and the documentation for this custom build are available at https://esafastprototyping.github.io/WebWorldWind-ESA/.
+
 If you are new to Web WorldWind, please start with the official release and documentation at https://worldwind.arc.nasa.gov/web/
+
+## Use from NPM
+
+The releases are available on NPM:
+```
+npm install --save webworldwind-esa
+```
 
 ## License
 
@@ -48,3 +57,12 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+**Third-Party Libraries as embedded as follows:**
+
+- [ES6-Promise](https://github.com/stefanpenner/es6-promise)
+- [libtess.js](https://github.com/brendankenny/libtess.js)
+- [JSZip](https://stuk.github.io/jszip/)
+- [Proj4js](http://proj4js.org/)
+
+Please see NOTICE.md for their attribution and licenses.

@@ -231,7 +231,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         './shapes/ScreenImage',
         './shapes/ScreenText',
         './geom/Sector',
-        './layer/SentinelCloudlessLayer',
+        './layer/Sentinel2CloudlessLayer',
         './shapes/ShapeAttributes',
         './util/editor/ShapeEditor',
         './formats/shapefile/Shapefile',
@@ -530,7 +530,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
               ScreenImage,
               ScreenText,
               Sector,
-              SentinelCloudlessLayer,
+              Sentinel2CloudlessLayer,
               ShapeAttributes,
               ShapeEditor,
               Shapefile,
@@ -1067,7 +1067,7 @@ define([ // PLEASE KEEP ALL THIS IN ALPHABETICAL ORDER BY MODULE NAME (not direc
         WorldWind['ScreenText'] = ScreenText;
         WorldWind['ScreenImage'] = ScreenImage;
         WorldWind['Sector'] = Sector;
-        WorldWind['SentinelCloudlessLayer'] = SentinelCloudlessLayer;
+        WorldWind['Sentinel2CloudlessLayer'] = Sentinel2CloudlessLayer;
         WorldWind['ShapeAttributes'] = ShapeAttributes;
         WorldWind['ShapeEditor'] = ShapeEditor;
         WorldWind['Shapefile'] = Shapefile;

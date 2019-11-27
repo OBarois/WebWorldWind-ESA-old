@@ -411,6 +411,9 @@ define([
                         if (configuration.userProperties) {
                             placemark.userProperties = configuration.userProperties;
                         }
+                        if (configuration.timeRange) {
+                            placemark.timeRange = configuration.timeRange;
+                        }
                         layer.addRenderable(placemark);
                     }
                 }
@@ -481,6 +484,9 @@ define([
                         }
                         if (configuration.userProperties) {
                             placemark.userProperties = configuration.userProperties;
+                        }
+                        if (configuration.timeRange) {
+                            placemark.timeRange = configuration.timeRange;
                         }
                         layer.addRenderable(placemark);
                     }
@@ -565,6 +571,9 @@ define([
                     }
                     if (configuration.userProperties) {
                         shape.userProperties = configuration.userProperties;
+                    }
+                    if (configuration.timeRange) {
+                        shape.timeRange = configuration.timeRange;
                     }
                     layer.addRenderable(shape);
                 }
@@ -667,6 +676,9 @@ define([
                 }
                 if (configuration.userProperties) {
                     shape.userProperties = configuration.userProperties;
+                }
+                if (configuration.timeRange) {
+                    shape.timeRange = configuration.timeRange;
                 }
                 layer.addRenderable(shape);
             }

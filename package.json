@@ -1,21 +1,20 @@
 {
   "name": "webworldwind-esa",
-  "version": "1.0.0-rc.1",
-  "description": "Web WorldWind",
+  "version": "1.0.0-rc2",
+  "description": "Web WorldWind ESA",
   "main": "build/dist/worldwind.min.js",
-  "homepage": "https://worldwind.arc.nasa.gov",
+  "homepage": "https://esafastprototyping.github.io/WebWorldWind-ESA/",
   "bugs": {
-    "url": "https://github.com/NASAWorldWind/WebWorldWind/issues"
+    "url": "https://github.com/ESAFastPrototyping/WebWorldWind-ESA/issues"
   },
   "license": "Apache-2.0",
-  "author": "NASA",
+  "author": "WebWorldWind ESA Team",
   "contributors": [
-    "NASA Project Manager <patrick.hogan@nasa.gov>",
     "ESA Consortium Contact <yann.voumard@solenix.ch>"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/NASAWorldWind/WebWorldWind.git"
+    "url": "https://github.com/ESAFastPrototyping/WebWorldWind-ESA.git"
   },
   "scripts": {
     "build": "grunt",

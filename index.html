@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <title>Web WorldWind (ESA Custom Build)</title>
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+  <style>
+    .panel-heading,
+    .panel-body {
+      overflow: overlay;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container content-container" style="margin-top: 20px; margin-bottom: 20px;">
+    <div class="col-sm-12">
+      <h1>About</h1>
+      <p>This <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA" target="_blank">repository</a> contains a
+        custom build of Web WorldWind, which includes features not yet part of an official release from the project. It
+        is intended primarily for ESA projects.</p>
+      <p>These additions and modifications were created in the scope of the Frame Contract for Social Media and Mobile
+        Applications Development for EO Ground Segment and Mission Operations, European Space Agency (ESA) Contract
+        Number 4000112250. They are released under Apache License 2.0.</p>
+      <p>Consortium: Solenix Deutschland GmbH (Prime Contractor), TERRASIGNA SRL, GISAT SRO, Progressive Systems SRL,
+        Qualteh JR SRL.</p>
+
+      <h1>Examples</h1>
+      <p>The examples below provide an overview of the modules created within the scope of the above-mentioned activity.
+        Their complete source code is available in the <a
+          href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/tree/esa/examples" target="_blank">examples
+          module</a>.</p>
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <a href="examples/Annotations.html">
+                <h3 class="panel-title">Annotations</h3>
+              </a>
+            </div>
+            <div class="panel-body">
+              <p>
+                Display balloons as annotations for locations around the globe.
+              </p>
+              <h5>Source:</h5>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/Annotations.js">Annotations.js</a><br>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/Annotations.html">Annotations.html</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <a href="examples/Collada.html">
+                <h3 class="panel-title">Collada</h3>
+              </a>
+            </div>
+            <div class="panel-body">
+              <p>
+                Display 3D models in the Collada format.
+              </p>
+              <h5>Source:</h5>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/Collada.js">Collada.js</a><br>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/Collada.html">Collada.html</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <a href="examples/GeoJSON.html">
+                <h3 class="panel-title">GeoJSON</h3>
+              </a>
+            </div>
+            <div class="panel-body">
+              <p>
+                Parse and configure shapes in the GeoJSON format.
+              </p>
+              <h5>Source:</h5>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/GeoJSON.js">GeoJSON.js</a><br>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/GeoJSON.html">GeoJSON.html</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <a href="examples/GeoJSONExporter.html">
+                <h3 class="panel-title">GeoJSON Exporter</h3>
+              </a>
+            </div>
+            <div class="panel-body">
+              <p>
+                Export shapes in the GeoJSON format.
+              </p>
+              <h5>Source:</h5>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/GeoJSONExporter.js">GeoJSONExporter.js</a><br>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/GeoJSONExporter.html">GeoJSONExporter.html</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <a href="examples/GeoTIFF.html">
+                <h3 class="panel-title">GeoTIFF</h3>
+              </a>
+            </div>
+            <div class="panel-body">
+              <p>
+                Display images in the GeoTIFF format.
+              </p>
+              <h5>Source:</h5>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/GeoTIFF.js">GeoTIFF.js</a><br>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/GeoTIFF.html">GeoTIFF.html</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <a href="examples/GriddedData.html">
+                <h3 class="panel-title">Gridded Data</h3>
+              </a>
+            </div>
+            <div class="panel-body">
+              <p>
+                Parse and display gridded data as a vector field.
+              </p>
+              <h5>Source:</h5>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/GriddedData.js">GriddedData.js</a><br>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/GriddedData.html">GriddedData.html</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <a href="examples/HeatMap.html">
+                <h3 class="panel-title">Heat Map</h3>
+              </a>
+            </div>
+            <div class="panel-body">
+              <p>
+                Parse and display gridded data as a heat map.
+              </p>
+              <h5>Source:</h5>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/HeatMap.js">HeatMap.js</a><br>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/HeatMap.html">HeatMap.html</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <a href="examples/KML.html">
+                <h3 class="panel-title">KML</h3>
+              </a>
+            </div>
+            <div class="panel-body">
+              <p>
+                Parse and configure shapes in the KML format.
+              </p>
+              <h5>Source:</h5>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/KML.js">KML.js</a><br>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/KML.html">KML.html</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <a href="examples/Measurements.html">
+                <h3 class="panel-title">Measurements</h3>
+              </a>
+            </div>
+            <div class="panel-body">
+              <p>
+                Measure distances and areas on the globe.
+              </p>
+              <h5>Source:</h5>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/Measurements.js">Measurements.js</a><br>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/Measurements.html">Measurements.html</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <a href="examples/NightSkyAnimation.html">
+                <h3 class="panel-title">Night Sky Animation</h3>
+              </a>
+            </div>
+            <div class="panel-body">
+              <p>
+                Enhance the globe with a realistic night sky.
+              </p>
+              <h5>Source:</h5>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/NightSkyAnimation.js">NightSkyAnimation.js</a><br>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/NightSkyAnimation.html">NightSkyAnimation.html</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <a href="examples/OpenSearch.html">
+                <h3 class="panel-title">OpenSearch</h3>
+              </a>
+            </div>
+            <div class="panel-body">
+              <p>
+                Query and display geolocalised items from OpenSearch servers.
+              </p>
+              <h5>Source:</h5>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/OpenSearch.js">OpenSearch.js</a><br>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/OpenSearch.html">OpenSearch.html</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <a href="examples/ShapeCreator.html">
+                <h3 class="panel-title">Surface Shape Creator</h3>
+              </a>
+            </div>
+            <div class="panel-body">
+              <p>
+                Let users create new shapes on the globe.
+              </p>
+              <h5>Source:</h5>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/ShapeCreator.js">ShapeCreator.js</a><br>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/ShapeCreator.html">ShapeCreator.html</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <a href="examples/ShapeEditor.html">
+                <h3 class="panel-title">Surface Shape Editor</h3>
+              </a>
+            </div>
+            <div class="panel-body">
+              <p>
+                Let users edit existing shape on the globe.
+              </p>
+              <h5>Source:</h5>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/ShapeEditor.js">ShapeEditor.js</a><br>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/ShapeEditor.html">ShapeEditor.html</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <a href="examples/WKT.html">
+                <h3 class="panel-title">Well-Known Text</h3>
+              </a>
+            </div>
+            <div class="panel-body">
+              <p>
+                Parse and configure shapes in the WKT format.
+              </p>
+              <h5>Source:</h5>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/WKT.js">WKT.js</a><br>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/WKT.html">WKT.html</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <a href="examples/WktExporter.html">
+                <h3 class="panel-title">Well-Known Text Exporter</h3>
+              </a>
+            </div>
+            <div class="panel-body">
+              <p>
+                Export shapes in the WKT format.
+              </p>
+              <h5>Source:</h5>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/WktExporter.js">WktExporter.js</a><br>
+              <a href="https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/examples/WktExporter.html">WktExporter.html</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h1>Documentation</h1>
+      <p>The API documentation for this custom build is available <a href="api-doc/index.html">here</a>.</p>
+    </div>
+  </div>
+</body>
+
+</html>
