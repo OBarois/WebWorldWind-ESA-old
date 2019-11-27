@@ -58,11 +58,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-**Third-Party Libraries as embedded as follows:**
+**Third-Party Libraries are embedded as follows:**
 
 - [ES6-Promise](https://github.com/stefanpenner/es6-promise)
 - [libtess.js](https://github.com/brendankenny/libtess.js)
 - [JSZip](https://stuk.github.io/jszip/)
 - [Proj4js](http://proj4js.org/)
 
-Please see NOTICE.md for their attribution and licenses.
+Please see [NOTICE.md](https://github.com/ESAFastPrototyping/WebWorldWind-ESA/blob/esa/NOTICE.md) for their attribution and licenses.
