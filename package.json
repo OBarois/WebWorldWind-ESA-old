@@ -1,6 +1,6 @@
 {
   "name": "webworldwind-esa",
-  "version": "1.0.0-rc2",
+  "version": "1.0.0",
   "description": "Web WorldWind ESA",
   "main": "build/dist/worldwind.min.js",
   "homepage": "https://esafastprototyping.github.io/WebWorldWind-ESA/",
