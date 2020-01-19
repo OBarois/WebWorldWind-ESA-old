@@ -40,7 +40,7 @@ define(['../gesture/GestureRecognizer'],
              * The minimum translation velocity that triggers a fling, in pixels per second.
              * @type {Number}
              */
-            this.minVelocity = 100;
+            this.minVelocity = 200;
 
             this._stackLimit = 5;
             this._positionStack = [];

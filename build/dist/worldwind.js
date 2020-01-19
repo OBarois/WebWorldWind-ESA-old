@@ -32388,7 +32388,7 @@ define('gesture/FlingRecognizer',['../gesture/GestureRecognizer'],
              * The minimum translation velocity that triggers a fling, in pixels per second.
              * @type {Number}
              */
-            this.minVelocity = 100;
+            this.minVelocity = 200;
 
             this._stackLimit = 5;
             this._positionStack = [];
@@ -32405,7 +32405,7 @@ define('gesture/FlingRecognizer',['../gesture/GestureRecognizer'],
                 x: event.clientX,
                 y: event.clientY}
             );
-            console.log( this._positionStack[this._positionStack.length-1].time + ' / ' +this._positionStack[this._positionStack.length-1].x + ' / ' +this._positionStack[this._positionStack.length-1].y + ' / ' )
+            // console.log( this._positionStack[this._positionStack.length-1].time + ' / ' +this._positionStack[this._positionStack.length-1].x + ' / ' +this._positionStack[this._positionStack.length-1].y + ' / ' )
         };
 
         FlingRecognizer.prototype._getVelocity = function () {
@@ -32415,9 +32415,9 @@ define('gesture/FlingRecognizer',['../gesture/GestureRecognizer'],
                 return {x: 0, y: 0};
             }
 
-            var startLocation = this._positionStack[stackLength-3];
-            var midLocation = this._positionStack[stackLength-2];
-            var endLocation = this._positionStack[stackLength - 1];
+            var startLocation = this._positionStack[stackLength - 3];
+            var midLocation = this._positionStack[stackLength - 2];
+            var endLocation = this._positionStack[stackLength - 1]; 
             this._positionStack.length = 0;
 
             var elapsedTime = (endLocation.time - midLocation.time) / 1000;
