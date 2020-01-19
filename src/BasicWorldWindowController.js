@@ -127,12 +127,12 @@ define([
             this.rotationRecognizer.requireRecognizerToFail(this.tiltRecognizer);
 
             // Intentionally not documented.
-            // this.tapRecognizer = new TapRecognizer(this.wwd, null);
-            // this.tapRecognizer.addListener(this);
+            this.tapRecognizer = new TapRecognizer(this.wwd, null);
+            this.tapRecognizer.addListener(this);
 
             // Intentionally not documented.
-            // this.clickRecognizer = new ClickRecognizer(this.wwd, null);
-            // this.clickRecognizer.addListener(this);
+            this.clickRecognizer = new ClickRecognizer(this.wwd, null);
+            this.clickRecognizer.addListener(this);
 
             // Intentionally not documented.
             this.flingRecognizer = new FlingRecognizer(this.wwd, null);
@@ -220,16 +220,18 @@ define([
             else if (recognizer === this.tiltRecognizer) {
                 this.handleTilt(recognizer);
             }
-            // else if (recognizer === this.clickRecognizer || recognizer === this.tapRecognizer) {
-            //     this.handleClickOrTap(recognizer);
-            // }
+            else if (recognizer === this.clickRecognizer || recognizer === this.tapRecognizer) {
+                this.handleClickOrTap(recognizer);
+            }
             else if (recognizer === this.flingRecognizer) {
                 this.handleFling(recognizer);
             }
         };
 
         // Intentionally not documented.
-        // BasicWorldWindowController.prototype.handleClickOrTap = function (recognizer) {
+        BasicWorldWindowController.prototype.handleClickOrTap = function (recognizer) {
+            this.cancelFlingAnimation();
+        }
         //     if (recognizer.state === WorldWind.RECOGNIZED) {
         //         var pickPoint = this.wwd.canvasCoordinates(recognizer.clientX, recognizer.clientY);
         //
@@ -261,8 +263,9 @@ define([
             var state = recognizer.state;
             var x = recognizer.clientX;
             var y = recognizer.clientY;
-
+console.log('drag')
             if (state === WorldWind.BEGAN) {
+                this.cancelFlingAnimation();
                 var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(x, y));
                 if (!wwd.globe.intersectsLine(ray, this.beginIntersectionPoint)) {
                     return;
@@ -378,6 +381,7 @@ define([
 
             var navigator = this.wwd.navigator;
             if (state === WorldWind.BEGAN) {
+                
                 this.beginPoint.set(x, y);
                 this.lastPoint.set(x, y);
             } else if (state === WorldWind.CHANGED) {
@@ -501,6 +505,7 @@ define([
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.handleFling3D = function (recognizer) {
+            console.log('fling')
             if (recognizer.state === WorldWind.RECOGNIZED) {
                 var navigator = this.wwd.navigator;
 
@@ -519,6 +524,7 @@ define([
 
                 var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(this.lastPoint[0], this.lastPoint[1]));
                 if (!wwd.globe.intersectsLine(ray, this.lastIntersectionPoint)) {
+                    console.log('lost1!')
                     return;
                 }
                 wwd.globe.computePositionFromPoint(this.lastIntersectionPoint[0], this.lastIntersectionPoint[1], this.lastIntersectionPoint[2], this.lastIntersectionPosition);
@@ -527,11 +533,13 @@ define([
                 if (shouldUseSphereRotation) {
                     var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(this.beginPoint[0], this.beginPoint[1]));
                     if (!wwd.globe.intersectsLine(ray, this.beginIntersectionPoint)) {
+                        console.log('lost2!')
                         return;
                     }
 
                     rotationAngle = this.computeRotationVectorAndAngle(this.beginIntersectionPoint, this.lastIntersectionPoint, this.rotationVector);
                     if (!isFinite(rotationAngle) || !isFinite(this.rotationVector[0]) || !isFinite(this.rotationVector[1]) || !isFinite(this.rotationVector[2])) {
+                        console.log('lost3!')
                         return;
                     }
                 }
@@ -546,6 +554,8 @@ define([
 
                     if (!lastLocation.equals(navigator.lookAtLocation)) {
                         // The navigator was changed externally. Aborting the animation.
+                        console.log('same loc')
+
                         return;
                     }
 
