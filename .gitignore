@@ -6,7 +6,10 @@
 
 .idea/workspace.xml
 
-build/
+build/test-results
+build/WebWorldWind-Distribution-1.0.0.zip
+build/dist/api-doc
+build/dist/examples
 
 nasaworldwind-worldwind-*.tgz
 
