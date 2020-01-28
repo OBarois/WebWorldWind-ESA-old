@@ -33486,6 +33486,14 @@ define('BasicWorldWindowController',[
              */
             this.zoomToMouseEnabled = true;
 
+            /**
+             * Keep the globe in north up position
+             *
+             * @type {Boolean}
+             * @default true
+             */
+            this.keepNorthUp = true;
+
             // Intentionally not documented.
             this.primaryDragRecognizer = new DragRecognizer(this.wwd, null);
             this.primaryDragRecognizer.addListener(this);
@@ -33559,6 +33567,11 @@ define('BasicWorldWindowController',[
             this.rotationVector = new Vec3(0, 0, 0);
             this.scratchRay = new Line(new Vec3(0, 0, 0), new Vec3(0, 0, 0));
             this.scratchMatrix = Matrix.fromIdentity();
+
+            this.doubleClick = false;
+            this.longClick = false;
+            this.readyToDetectLongClickBeforeMove = false;
+            this.lastClickTime = 0;
         };
 
         BasicWorldWindowController.prototype = Object.create(WorldWindowController.prototype);
@@ -33567,8 +33580,34 @@ define('BasicWorldWindowController',[
         BasicWorldWindowController.prototype.onGestureEvent = function (e) {
             var handled = WorldWindowController.prototype.onGestureEvent.call(this, e);
 
+            // console.log(e.type)
+
             if (e.type === 'mousemove' || (e.pointerType === 'mouse' && e.type === 'pointermove')) {
                 this.pointerLocation = null;
+            }
+
+            if (e.type === 'pointermove') {
+                // detect long click
+                if (this.readyToDetectLongClickBeforeMove) {
+                    this.longClick = (e.timeStamp - this.lastClickTime > 1000)
+                    this.readyToDetectLongClickBeforeMove = false                    
+                }
+
+            }
+
+            if (e.type === 'pointerup') {
+                this.doubleClick = false
+            }
+
+            if (e.type === 'pointerdown') {
+                // detect double click/tap
+                if (!this.doubleClick) {
+                    this.doubleClick = (e.timeStamp - this.lastClickTime < 300)
+                }
+                this.readyToDetectLongClickBeforeMove = true
+                this.lastClickTime = e.timeStamp
+                this.cancelFlingAnimation();
+                this.longClick = false;
             }
 
             if (!handled) {
@@ -33628,7 +33667,7 @@ define('BasicWorldWindowController',[
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.handleClickOrTap = function (recognizer) {
-            this.cancelFlingAnimation();
+            // this.cancelFlingAnimation();
         }
         //     if (recognizer.state === WorldWind.RECOGNIZED) {
         //         var pickPoint = this.wwd.canvasCoordinates(recognizer.clientX, recognizer.clientY);
@@ -33648,11 +33687,15 @@ define('BasicWorldWindowController',[
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.handlePanOrDrag = function (recognizer) {
-            if (this.wwd.globe.is2D()) {
-                this.handlePanOrDrag2D(recognizer);
-            } else {
-                this.handlePanOrDrag3D(recognizer);
-            }
+            // If a double click started the gesture, handle as a zoom
+            if (this.doubleClick) this.handleDoubleClickDragOrPan(recognizer)
+            else
+
+                if (this.wwd.globe.is2D()) {
+                    this.handlePanOrDrag2D(recognizer);
+                } else {
+                    this.handlePanOrDrag3D(recognizer);
+                }
         };
 
         // Intentionally not documented.
@@ -33661,7 +33704,7 @@ define('BasicWorldWindowController',[
             var state = recognizer.state;
             var x = recognizer.clientX;
             var y = recognizer.clientY;
-console.log('drag')
+
             if (state === WorldWind.BEGAN) {
                 this.cancelFlingAnimation();
                 var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(x, y));
@@ -33701,6 +33744,7 @@ console.log('drag')
             wwd.globe.computePositionFromPoint(this.lastIntersectionPoint[0], this.lastIntersectionPoint[1], this.lastIntersectionPoint[2], this.lastIntersectionPosition);
 
             if (this.isSphereRotation(this.lastIntersectionPosition)) {
+                console.log("sphere rotation")
                 var rotationAngle = this.computeRotationVectorAndAngle(this.beginIntersectionPoint, this.lastIntersectionPoint, this.rotationVector);
                 var isFling = false;
                 return this.rotateShpere(this.rotationVector, rotationAngle, isFling);
@@ -33719,7 +33763,9 @@ console.log('drag')
         BasicWorldWindowController.prototype.isSphereRotation = function (lastIntersectionPosition) {
             var looAtLatitude = this.wwd.navigator.lookAtLocation.latitude; 
             var heading = this.wwd.navigator.heading;
-            return (heading !== 0 || Math.abs(looAtLatitude) > 75 || Math.abs(lastIntersectionPosition.latitude) > 75);
+
+            // return (false);
+            return ((heading !== 0 || Math.abs(looAtLatitude) > 75 || Math.abs(lastIntersectionPosition.latitude) > 75) && !this.keepNorthUp);
         };
 
         // Intentionally not documented.
@@ -33903,7 +33949,7 @@ console.log('drag')
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.handleFling3D = function (recognizer) {
-            console.log('fling')
+
             if (recognizer.state === WorldWind.RECOGNIZED) {
                 var navigator = this.wwd.navigator;
 
@@ -33952,13 +33998,11 @@ console.log('drag')
 
                     if (!lastLocation.equals(navigator.lookAtLocation)) {
                         // The navigator was changed externally. Aborting the animation.
-                        console.log('same loc')
-
                         return;
                     }
 
                     // Compute the delta to apply using a sinusoidal out easing
-                    var elapsed = (new Date() - startTime) / animationDuration;
+                    var elapsed = (new Date() - startTime) / (controller.longClick?6000000:animationDuration);
                     elapsed = elapsed > 1 ? 1 : elapsed;
                     var value = Math.sin(elapsed * Math.PI / 2);
 
@@ -34062,6 +34106,8 @@ console.log('drag')
                 this.lastRotation = rotation;
                 this.applyLimits();
                 this.wwd.redraw();
+
+                // after a rotation the keepNorthUp flag  
             }
         };
 
@@ -34083,6 +34129,39 @@ console.log('drag')
                 this.wwd.redraw();
             }
         };
+
+        BasicWorldWindowController.prototype.handleDoubleClickDragOrPan = function (recognizer) {
+
+            var state = recognizer.state;
+            var x = recognizer.clientX;
+            var y = recognizer.clientY;
+            // var ty = recognizer.translationY;
+
+            if (state === WorldWind.BEGAN) {       
+                this.beginPoint.set(x, y);
+                this.lastPoint.set(x, y);
+            } 
+            else if (state === WorldWind.CHANGED) {
+
+                var deltaScale = y - this.lastPoint[1]
+                var navigator = this.wwd.navigator;
+                var scale = 1 + (deltaScale / 300);
+    
+                this.lastPoint.set(x, y);
+                this.moveZoom(this.beginPoint[0], this.beginPoint[1], scale);
+    
+                // Apply the scale to this navigator's properties.
+                navigator.range *= scale;
+                this.applyLimits();
+                this.wwd.redraw();
+    
+            }
+
+
+
+            
+        }
+
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.handleWheelEvent = function (event) {
