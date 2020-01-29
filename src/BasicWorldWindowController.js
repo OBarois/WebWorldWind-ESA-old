@@ -182,8 +182,6 @@ define([
         BasicWorldWindowController.prototype.onGestureEvent = function (e) {
             var handled = WorldWindowController.prototype.onGestureEvent.call(this, e);
 
-            // console.log(e.type)
-
             if (e.type === 'mousemove' || (e.pointerType === 'mouse' && e.type === 'pointermove')) {
                 this.pointerLocation = null;
             }
@@ -346,7 +344,6 @@ define([
             wwd.globe.computePositionFromPoint(this.lastIntersectionPoint[0], this.lastIntersectionPoint[1], this.lastIntersectionPoint[2], this.lastIntersectionPosition);
 
             if (this.isSphereRotation(this.lastIntersectionPosition)) {
-                console.log("sphere rotation")
                 var rotationAngle = this.computeRotationVectorAndAngle(this.beginIntersectionPoint, this.lastIntersectionPoint, this.rotationVector);
                 var isFling = false;
                 return this.rotateShpere(this.rotationVector, rotationAngle, isFling);
@@ -570,7 +567,6 @@ define([
 
                 var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(this.lastPoint[0], this.lastPoint[1]));
                 if (!wwd.globe.intersectsLine(ray, this.lastIntersectionPoint)) {
-                    console.log('lost1!')
                     return;
                 }
                 wwd.globe.computePositionFromPoint(this.lastIntersectionPoint[0], this.lastIntersectionPoint[1], this.lastIntersectionPoint[2], this.lastIntersectionPosition);
@@ -579,13 +575,11 @@ define([
                 if (shouldUseSphereRotation) {
                     var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(this.beginPoint[0], this.beginPoint[1]));
                     if (!wwd.globe.intersectsLine(ray, this.beginIntersectionPoint)) {
-                        console.log('lost2!')
                         return;
                     }
 
                     rotationAngle = this.computeRotationVectorAndAngle(this.beginIntersectionPoint, this.lastIntersectionPoint, this.rotationVector);
                     if (!isFinite(rotationAngle) || !isFinite(this.rotationVector[0]) || !isFinite(this.rotationVector[1]) || !isFinite(this.rotationVector[2])) {
-                        console.log('lost3!')
                         return;
                     }
                 }
@@ -747,10 +741,10 @@ define([
 
                 var deltaScale = y - this.lastPoint[1]
                 var navigator = this.wwd.navigator;
-                var scale = 1 + (deltaScale / 300);
+                var scale = 1 - (deltaScale / 300);
     
                 this.lastPoint.set(x, y);
-                this.moveZoom(this.beginPoint[0], this.beginPoint[1], scale);
+                // this.moveZoom(this.beginPoint[0], this.beginPoint[1], scale);
     
                 // Apply the scale to this navigator's properties.
                 navigator.range *= scale;
