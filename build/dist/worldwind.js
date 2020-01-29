@@ -34145,10 +34145,10 @@ define('BasicWorldWindowController',[
 
                 var deltaScale = y - this.lastPoint[1]
                 var navigator = this.wwd.navigator;
-                var scale = 1 + (deltaScale / 300);
+                var scale = 1 + (deltaScale / 200);
     
                 this.lastPoint.set(x, y);
-                this.moveZoom(this.beginPoint[0], this.beginPoint[1], scale);
+                // this.moveZoom(this.beginPoint[0], this.beginPoint[1], scale);
     
                 // Apply the scale to this navigator's properties.
                 navigator.range *= scale;
