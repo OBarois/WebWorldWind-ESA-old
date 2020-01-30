@@ -34117,20 +34117,35 @@ define('BasicWorldWindowController',[
             var navigator = this.wwd.navigator;
             var state = recognizer.state,
                 rotation = recognizer.rotation;
+                
 
             if (state === WorldWind.BEGAN) {
                 this.lastRotation = 0;
+                this.detectNorthUp = false;
             } else if (state === WorldWind.CHANGED) {
                 // Apply the change in gesture rotation to this navigator's current heading. We apply relative to the
                 // current heading rather than the heading when the gesture began in order to work simultaneously with
                 // pan operations that also modify the current heading.
-                navigator.heading -= rotation - this.lastRotation;
+                
+
+                if(Math.abs(navigator.heading) < 10 && this.detectNorthUp) {
+                    this.northUpMode = this.keepNorthUp
+                    navigator.heading = 0
+                    // this.detectNorthUp=true;
+                } else {
+                    console.log("north lost")
+                    this.northUpMode = false;
+                    navigator.heading -= rotation - this.lastRotation;
+                    if(Math.abs(navigator.heading) > 10) {
+                        this.detectNorthUp=true;
+                    }
+                }
+
+
                 this.lastRotation = rotation;
                 this.applyLimits();
                 this.wwd.redraw();       
             }
-            console.log("North lost")
-            this.northUpMode = false;
          
 
         };
