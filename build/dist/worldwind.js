@@ -34105,9 +34105,7 @@ define('BasicWorldWindowController',[
                 navigator.heading -= rotation - this.lastRotation;
                 this.lastRotation = rotation;
                 this.applyLimits();
-                this.wwd.redraw();
-
-                // after a rotation the keepNorthUp flag  
+                this.wwd.redraw();                
             }
         };
 
@@ -34127,6 +34125,7 @@ define('BasicWorldWindowController',[
                 navigator.tilt = this.beginTilt + tiltDegrees;
                 this.applyLimits();
                 this.wwd.redraw();
+                this.keepNorthUp = false
             }
         };
 
@@ -34145,7 +34144,7 @@ define('BasicWorldWindowController',[
 
                 var deltaScale = y - this.lastPoint[1]
                 var navigator = this.wwd.navigator;
-                var scale = 1 + (deltaScale / 200);
+                var scale = 1 - (deltaScale / 200);
     
                 this.lastPoint.set(x, y);
                 // this.moveZoom(this.beginPoint[0], this.beginPoint[1], scale);
