@@ -34101,7 +34101,7 @@ define('BasicWorldWindowController',[
                 if (scale !== 0) {
                     var newRange = this.beginRange / scale;
                     var amount =  newRange / navigator.range;
-                    this.moveZoom(recognizer.clientX, recognizer.clientY, amount);
+                    // this.moveZoom(recognizer.clientX, recognizer.clientY, amount);
 
                     // Apply the change in pinch scale to this navigator's range, relative to the range when the gesture
                     // began.
