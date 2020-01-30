@@ -174,6 +174,8 @@ define([
             this.longClick = false;
             this.readyToDetectLongClickBeforeMove = false;
             this.lastClickTime = 0;
+            this.northUpMode = true;
+            this.detectNorthUp = false;
         };
 
         BasicWorldWindowController.prototype = Object.create(WorldWindowController.prototype);
@@ -192,6 +194,7 @@ define([
                 // detect long click
                 if (this.readyToDetectLongClickBeforeMove) {
                     this.longClick = (e.timeStamp - this.lastClickTime > 1000)
+                    console.log("longggg click: "+this.longClick)
                     this.readyToDetectLongClickBeforeMove = false                    
                 }
 
@@ -345,7 +348,8 @@ define([
             }
             wwd.globe.computePositionFromPoint(this.lastIntersectionPoint[0], this.lastIntersectionPoint[1], this.lastIntersectionPoint[2], this.lastIntersectionPosition);
 
-            if (this.isSphereRotation(this.lastIntersectionPosition)) {
+            // if (this.isSphereRotation(this.lastInt?ersectionPosition)) {
+            if(!this.northUpMode) {
                 console.log("sphere rotation")
                 var rotationAngle = this.computeRotationVectorAndAngle(this.beginIntersectionPoint, this.lastIntersectionPoint, this.rotationVector);
                 var isFling = false;
@@ -367,7 +371,8 @@ define([
             var heading = this.wwd.navigator.heading;
 
             // return (false);
-            return ((heading !== 0 || Math.abs(looAtLatitude) > 75 || Math.abs(lastIntersectionPosition.latitude) > 75) && !this.keepNorthUp);
+            return ((Math.abs(heading) !== 0 || Math.abs(looAtLatitude) > 75 || Math.abs(lastIntersectionPosition.latitude) > 75) && !this.northUpMode);
+            // return (( Math.abs(looAtLatitude) > 75 || Math.abs(lastIntersectionPosition.latitude) > 75) && !this.northUpMode);
         };
 
         // Intentionally not documented.
@@ -413,8 +418,8 @@ define([
             navigator.lookAtLocation.copy(params.origin);
             navigator.lookAtLocation.altitude = altitude;
             navigator.tilt = tilt;
-
-            return true;
+            
+             return true;
         }
 
         // Intentionally not documented.
@@ -654,6 +659,7 @@ define([
             if (state === WorldWind.BEGAN) {
                 this.beginHeading = navigator.heading;
                 this.beginTilt = navigator.tilt;
+                this.detectNorthUp=false;
             } else if (state === WorldWind.CHANGED) {
                 // Compute the current translation from screen coordinates to degrees. Use the canvas dimensions as a
                 // metric for converting the gesture translation to a fraction of an angle.
@@ -661,11 +667,27 @@ define([
                     tiltDegrees = 90 * ty / this.wwd.canvas.clientHeight;
 
                 // Apply the change in heading and tilt to this navigator's corresponding properties.
-                navigator.heading = this.beginHeading + headingDegrees;
+                // navigator.heading = this.beginHeading + headingDegrees;
                 navigator.tilt = this.beginTilt + tiltDegrees;
+                if(Math.abs(navigator.heading) < 10 && this.detectNorthUp) {
+                    console.log("north up"+navigator.heading)
+                    this.northUpMode = this.keepNorthUp
+                    navigator.heading = 0
+                    // this.detectNorthUp=true;
+                } else {
+                    console.log("north lost")
+                    this.northUpMode = false;
+                    navigator.heading = this.beginHeading + headingDegrees;
+                    if(Math.abs(navigator.heading) > 10) {
+                        this.detectNorthUp=true;
+                    }
+                    
+                }
                 this.applyLimits();
                 this.wwd.redraw();
             }
+
+
         };
 
         // Intentionally not documented.
@@ -707,8 +729,12 @@ define([
                 navigator.heading -= rotation - this.lastRotation;
                 this.lastRotation = rotation;
                 this.applyLimits();
-                this.wwd.redraw();                
+                this.wwd.redraw();       
             }
+            console.log("North lost")
+            this.northUpMode = false;
+         
+
         };
 
         // Intentionally not documented.
