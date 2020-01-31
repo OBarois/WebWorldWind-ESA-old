@@ -34054,6 +34054,8 @@ define('BasicWorldWindowController',[
                 ty = recognizer.translationY;
 
             var navigator = this.wwd.navigator;
+            var isArcBall = navigator.camera instanceof ArcBallCamera;
+
             if (state === WorldWind.BEGAN) {
                 this.beginHeading = navigator.heading;
                 this.beginTilt = navigator.tilt;
@@ -34064,22 +34066,29 @@ define('BasicWorldWindowController',[
                 var headingDegrees = 180 * tx / this.wwd.canvas.clientWidth,
                     tiltDegrees = 90 * ty / this.wwd.canvas.clientHeight;
 
-                // Apply the change in heading and tilt to this navigator's corresponding properties.
-                // navigator.heading = this.beginHeading + headingDegrees;
+                // Apply the change in tilt to this navigator's corresponding properties.
                 navigator.tilt = this.beginTilt + tiltDegrees;
-                if(Math.abs(navigator.heading) < 10 && this.detectNorthUp) {
-                    console.log("north up"+navigator.heading)
-                    this.northUpMode = this.keepNorthUp
-                    navigator.heading = 0
-                    // this.detectNorthUp=true;
-                } else {
-                    console.log("north lost")
-                    this.northUpMode = false;
-                    navigator.heading = this.beginHeading + headingDegrees;
-                    if(Math.abs(navigator.heading) > 10) {
-                        this.detectNorthUp=true;
+
+                // Apply the change in heading to this navigator's corresponding properties.
+                // If the keepNorthUp flag is true, will lock the heading to North when the rotation comes close
+                if (isArcBall) {
+                    if(Math.abs(navigator.heading) < 10 && this.detectNorthUp) {
+                        console.log("north up"+navigator.heading)
+                        this.northUpMode = this.keepNorthUp
+                        navigator.heading = 0
+                        // this.detectNorthUp=true;
+                    } else {
+                        console.log("north lost")
+                        this.northUpMode = false;
+                        navigator.heading = this.beginHeading + headingDegrees;
+                        if(Math.abs(navigator.heading) > 10) {
+                            this.detectNorthUp=true;
+                        }
+                        
                     }
-                    
+    
+                } else {
+                    navigator.heading = this.beginHeading + headingDegrees;
                 }
                 this.applyLimits();
                 this.wwd.redraw();
