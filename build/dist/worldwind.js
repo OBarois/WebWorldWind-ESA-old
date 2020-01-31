@@ -33638,7 +33638,11 @@ define('BasicWorldWindowController',[
             }
 
             var isArcBall = this.wwd.navigator.camera instanceof ArcBallCamera;
-            if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
+
+            // If a double click started the gesture, handle as a zoom
+            if (this.doubleClick) this.handleDoubleClickDragOrPan(recognizer)
+            
+            else if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
                 if (isArcBall) {
                     this.handlePanOrDrag(recognizer);
                 }
@@ -33690,15 +33694,12 @@ define('BasicWorldWindowController',[
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.handlePanOrDrag = function (recognizer) {
-            // If a double click started the gesture, handle as a zoom
-            if (this.doubleClick) this.handleDoubleClickDragOrPan(recognizer)
-            else
 
-                if (this.wwd.globe.is2D()) {
-                    this.handlePanOrDrag2D(recognizer);
-                } else {
-                    this.handlePanOrDrag3D(recognizer);
-                }
+            if (this.wwd.globe.is2D()) {
+                this.handlePanOrDrag2D(recognizer);
+            } else {
+                this.handlePanOrDrag3D(recognizer);
+            }
         };
 
         // Intentionally not documented.
