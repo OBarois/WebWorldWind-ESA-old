@@ -243,7 +243,7 @@ define([
 
             // If a double click started the gesture, handle as a zoom
             if (this.doubleClick) this.handleDoubleClickDragOrPan(recognizer)
-            
+
             else if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
                 if (isArcBall) {
                     this.handlePanOrDrag(recognizer);
@@ -349,9 +349,8 @@ define([
             }
             wwd.globe.computePositionFromPoint(this.lastIntersectionPoint[0], this.lastIntersectionPoint[1], this.lastIntersectionPoint[2], this.lastIntersectionPosition);
 
-            // if (this.isSphereRotation(this.lastInt?ersectionPosition)) {
+            // if (this.isSphereRotation(this.lastIntersectionPosition)) {
             if(!this.northUpMode) {
-                console.log("sphere rotation")
                 var rotationAngle = this.computeRotationVectorAndAngle(this.beginIntersectionPoint, this.lastIntersectionPoint, this.rotationVector);
                 var isFling = false;
                 return this.rotateShpere(this.rotationVector, rotationAngle, isFling);
@@ -372,7 +371,7 @@ define([
             var heading = this.wwd.navigator.heading;
 
             // return (false);
-            return ((Math.abs(heading) !== 0 || Math.abs(looAtLatitude) > 75 || Math.abs(lastIntersectionPosition.latitude) > 75) && !this.northUpMode);
+            return ((Math.abs(heading) !== 0 || Math.abs(looAtLatitude) > 75 || Math.abs(lastIntersectionPosition.latitude) > 75) );
             // return (( Math.abs(looAtLatitude) > 75 || Math.abs(lastIntersectionPosition.latitude) > 75) && !this.northUpMode);
         };
 
@@ -599,6 +598,8 @@ define([
                 // Start time of this animation
                 var startTime = new Date();
 
+                var northUpMode = this.northUpMode
+
                 // Animation Loop
                 var controller = this;
                 var animate = function () {
@@ -614,7 +615,9 @@ define([
                     elapsed = elapsed > 1 ? 1 : elapsed;
                     var value = Math.sin(elapsed * Math.PI / 2);
 
-                    if (shouldUseSphereRotation) {
+                    // if (shouldUseSphereRotation) {
+                    if ( !northUpMode ) {
+
                         var angle = rotationAngle * (1 - value);
                         var isFling = true;
                         controller.rotateShpere(controller.rotationVector, angle, isFling);
@@ -743,9 +746,7 @@ define([
                 if(Math.abs(navigator.heading) < 10 && this.detectNorthUp) {
                     this.northUpMode = this.keepNorthUp
                     navigator.heading = 0
-                    // this.detectNorthUp=true;
                 } else {
-                    console.log("north lost")
                     this.northUpMode = false;
                     navigator.heading -= rotation - this.lastRotation;
                     if(Math.abs(navigator.heading) > 10) {
