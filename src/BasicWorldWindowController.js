@@ -194,7 +194,7 @@ define([
                 // detect long click
                 if (this.readyToDetectLongClickBeforeMove) {
                     this.longClick = (e.timeStamp - this.lastClickTime > 1000)
-                    console.log("longggg click: "+this.longClick)
+                    console.log("long long click: "+this.longClick)
                     this.readyToDetectLongClickBeforeMove = false                    
                 }
 
