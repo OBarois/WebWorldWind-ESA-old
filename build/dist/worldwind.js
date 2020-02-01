@@ -33640,15 +33640,17 @@ define('BasicWorldWindowController',[
             var isArcBall = this.wwd.navigator.camera instanceof ArcBallCamera;
 
             // If a double click started the gesture, handle as a zoom
-            if (this.doubleClick) this.handleDoubleClickDragOrPan(recognizer)
-
-            else if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
-                if (isArcBall) {
+            
+             if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
+                if (this.doubleClick) {
+                    this.handleDoubleClickDragOrPan(recognizer)
+                }
+                else if (isArcBall) {
                     this.handlePanOrDrag(recognizer);
-                }
-                else {
-                    this.handleSecondaryDrag(recognizer);
-                }
+                    }
+                    else {
+                        this.handleSecondaryDrag(recognizer);
+                    }
             }
             else if (recognizer === this.secondaryDragRecognizer) {
                 if (isArcBall) {
