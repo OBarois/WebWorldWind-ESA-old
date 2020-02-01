@@ -34314,7 +34314,7 @@ define('BasicWorldWindowController',[
 
         // Documented in super-class.
         BasicWorldWindowController.prototype.applyLimits = function () {
-            this.wwd.navigator.camera.applyLimits();
+            // this.wwd.navigator.camera.applyLimits();
         };
 
         return BasicWorldWindowController;
