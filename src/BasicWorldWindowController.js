@@ -344,7 +344,7 @@ define([
         // Intentionally not documented.
         BasicWorldWindowController.prototype.move3D = function(x, y) {
             var wwd = this.wwd;
-            console.log("lat/lon center: "+wwd.navigator.lookAtLocation.latitude+" / "+wwd.navigator.lookAtLocation.longitude)
+            // console.log("lat/lon center: "+wwd.navigator.lookAtLocation.latitude+" / "+wwd.navigator.lookAtLocation.longitude)
             // if(Math.abs(wwd.navigator.lookAtLocation.latitude) >80) {
             //     console.log("do nor move!!!")
             //     return false
