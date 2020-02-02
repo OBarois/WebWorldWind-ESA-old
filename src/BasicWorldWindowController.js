@@ -328,7 +328,7 @@ define([
                 if (didMove) {
                     this.beginPoint.copy(this.lastPoint);
                     this.lastPoint.set(x, y);
-                    this.applyLimits();
+                    // this.applyLimits();
                     this.dragDelta.set(
                         this.dragLastLocation.latitude - wwd.navigator.lookAtLocation.latitude,
                         Angle.normalizedDegreesLongitude(
@@ -337,13 +337,18 @@ define([
                     );
                     this.dragLastLocation.copy(wwd.navigator.lookAtLocation);
                     wwd.redraw();
-                }
+                } 
             }
         };
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.move3D = function(x, y) {
             var wwd = this.wwd;
+            console.log("lat/lon center: "+wwd.navigator.lookAtLocation.latitude+" / "+wwd.navigator.lookAtLocation.longitude)
+            // if(Math.abs(wwd.navigator.lookAtLocation.latitude) >80) {
+            //     console.log("do nor move!!!")
+            //     return false
+            // }
             
             var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(x, y));
             if (!wwd.globe.intersectsLine(ray, this.lastIntersectionPoint)) {
@@ -352,16 +357,24 @@ define([
             wwd.globe.computePositionFromPoint(this.lastIntersectionPoint[0], this.lastIntersectionPoint[1], this.lastIntersectionPoint[2], this.lastIntersectionPosition);
 
             // if (this.isSphereRotation(this.lastIntersectionPosition)) {
-            if(!this.northUpMode) {
+            // if(!this.northUpMode) {
+                if(this.keepNorthUp) {
                 var rotationAngle = this.computeRotationVectorAndAngle(this.beginIntersectionPoint, this.lastIntersectionPoint, this.rotationVector);
                 var isFling = false;
                 return this.rotateShpere(this.rotationVector, rotationAngle, isFling);
             }
             else {
+                console.log("should not be there...")
                 var deltaLat = this.lastIntersectionPosition.latitude - this.beginIntersectionPosition.latitude;
                 var deltaLon = this.lastIntersectionPosition.longitude - this.beginIntersectionPosition.longitude;
                 var lookAtLocation = wwd.navigator.lookAtLocation;
+                console.log("lat/lon center: "+lookAtLocation.latitude+" / "+lookAtLocation.longitude)
+                console.log("lat/lon: pointer"+this.lastIntersectionPosition.latitude+" / "+this.beginIntersectionPosition.longitude)
+                console.log("new lat "+(lookAtLocation.latitude - deltaLat));
+                console.log("deltaLat "+( deltaLat));
+                
                 lookAtLocation.latitude -= deltaLat;
+                
                 lookAtLocation.longitude -= deltaLon;
                 return true;
             }
@@ -400,18 +413,31 @@ define([
             var tilt = navigator.tilt;
             
             navigator.tilt = 0;
+
+            
+            if (this.northUpMode) navigator.heading = 0
+
+
             wwd.computeViewingTransform(null, viewMatrix);
             viewMatrix.multiplyByRotation(rotationVector[0], rotationVector[1], rotationVector[2], angle);
 
+
             viewMatrix.extractEyePoint(this.scratchRay.origin);
+
+            // keep north up
+            // template:  multiplyByLookAtModelview(lookAtPosition, range, heading, tilt, roll, globe)
+            // viewMatrix.multiplyByLookAtModelview(this.lastIntersectionPoint, navigator.range, 0, tilt, navigator.roll, wwd.globe)
+
+
             viewMatrix.extractForwardVector(this.scratchRay.direction);
             if (!wwd.globe.intersectsLine(this.scratchRay, this.lastIntersectionPoint)) {
+                console.log("intersection lost" )
                 navigator.tilt = tilt;
                 return false;
             }
 
             var params = viewMatrix.extractViewingParameters(this.lastIntersectionPoint, navigator.roll, wwd.globe, {});
-            if (!isFling && Math.abs(navigator.heading) < 5 && Math.abs(navigator.lookAtLocation.latitude < 70) && Math.abs(this.lastIntersectionPosition.latitude) < 70) {
+            if (!isFling && !this.northUpMode && Math.abs(navigator.heading) < 5 && Math.abs(navigator.lookAtLocation.latitude < 70) && Math.abs(this.lastIntersectionPosition.latitude) < 70) {
                 navigator.heading = Math.round(params.heading);
             }
             else {
@@ -583,7 +609,8 @@ define([
                 wwd.globe.computePositionFromPoint(this.lastIntersectionPoint[0], this.lastIntersectionPoint[1], this.lastIntersectionPoint[2], this.lastIntersectionPosition);
 
                 var shouldUseSphereRotation = this.isSphereRotation(this.lastIntersectionPosition);
-                if (shouldUseSphereRotation) {
+                // if (shouldUseSphereRotation) {
+                    if (this.keepNorthUp) {
                     var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(this.beginPoint[0], this.beginPoint[1]));
                     if (!wwd.globe.intersectsLine(ray, this.beginIntersectionPoint)) {
                         console.log('lost2!')
@@ -601,6 +628,7 @@ define([
                 var startTime = new Date();
 
                 var northUpMode = this.northUpMode
+                var keepNorthUp = this.keepNorthUp
 
                 // Animation Loop
                 var controller = this;
@@ -618,13 +646,15 @@ define([
                     var value = Math.sin(elapsed * Math.PI / 2);
 
                     // if (shouldUseSphereRotation) {
-                    if ( !northUpMode ) {
+                    // if ( !northUpMode ) {
+                        if (true) {
 
                         var angle = rotationAngle * (1 - value);
                         var isFling = true;
                         controller.rotateShpere(controller.rotationVector, angle, isFling);
                     }
                     else {
+                        console.log("should not be therre")
                         var deltaLatitude = initialDelta[0] - initialDelta[0] * value;
                         var deltaLongitude = initialDelta[1] - initialDelta[1] * value;
                         navigator.lookAtLocation.latitude -= deltaLatitude;
@@ -636,9 +666,10 @@ define([
 
                     // Save the new current lookAt location
                     lastLocation.copy(navigator.lookAtLocation);
+                    // console.log(navigator.lookAtLocation.latitude)
 
                     // If we haven't reached the animation duration, request a new frame
-                    if (elapsed < 1) {
+                    if (elapsed < 1 ) {
                         controller.flingAnimationId = requestAnimationFrame(animate);
                     }
                 };
