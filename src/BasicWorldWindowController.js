@@ -176,6 +176,7 @@ define([
             this.lastClickTime = 0;
             this.northUpMode = true;
             this.detectNorthUp = false;
+            this.lastDeltaScale = 0;
         };
 
         BasicWorldWindowController.prototype = Object.create(WorldWindowController.prototype);
@@ -208,6 +209,7 @@ define([
                 // detect double click/tap
                 if (!this.doubleClick) {
                     this.doubleClick = (e.timeStamp - this.lastClickTime < 300)
+                    console.log("double click: "+this.doubleClick)
                 }
                 this.readyToDetectLongClickBeforeMove = true
                 this.lastClickTime = e.timeStamp
@@ -315,6 +317,7 @@ define([
 
             if (state === WorldWind.BEGAN) {
                 this.cancelFlingAnimation();
+                
                 var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(x, y));
                 if (!wwd.globe.intersectsLine(ray, this.beginIntersectionPoint)) {
                     return;
@@ -324,8 +327,10 @@ define([
                 this.lastPoint.set(x, y);
             }
             else if (state === WorldWind.CHANGED) {
+                // console.log(wwd.navigator.lookAtLocation)
                 var didMove = this.move3D(x, y);
                 if (didMove) {
+                    
                     this.beginPoint.copy(this.lastPoint);
                     this.lastPoint.set(x, y);
                     // this.applyLimits();
@@ -395,7 +400,7 @@ define([
             var angleRad = MeasurerUtils.angleBetweenVectors(vec1, vec2);
             var angle = angleRad * Angle.RADIANS_TO_DEGREES;
             rotationVector.copy(vec1);
-            rotationVector.cross(vec2);
+            rotationVector.cross(vec2);            
             rotationVector.normalize();
             return angle;
         };
@@ -424,11 +429,6 @@ define([
 
             viewMatrix.extractEyePoint(this.scratchRay.origin);
 
-            // keep north up
-            // template:  multiplyByLookAtModelview(lookAtPosition, range, heading, tilt, roll, globe)
-            // viewMatrix.multiplyByLookAtModelview(this.lastIntersectionPoint, navigator.range, 0, tilt, navigator.roll, wwd.globe)
-
-
             viewMatrix.extractForwardVector(this.scratchRay.direction);
             if (!wwd.globe.intersectsLine(this.scratchRay, this.lastIntersectionPoint)) {
                 console.log("intersection lost" )
@@ -436,13 +436,17 @@ define([
                 return false;
             }
 
+            
+
             var params = viewMatrix.extractViewingParameters(this.lastIntersectionPoint, navigator.roll, wwd.globe, {});
-            if (!isFling && !this.northUpMode && Math.abs(navigator.heading) < 5 && Math.abs(navigator.lookAtLocation.latitude < 70) && Math.abs(this.lastIntersectionPosition.latitude) < 70) {
-                navigator.heading = Math.round(params.heading);
-            }
-            else {
-                navigator.heading = params.heading;
-            }
+            params.origin.latitude = WWMath.clamp(params.origin.latitude, -70, 70);
+            
+            // if (!isFling && !this.northUpMode && Math.abs(navigator.heading) < 5 && Math.abs(navigator.lookAtLocation.latitude < 70) && Math.abs(this.lastIntersectionPosition.latitude) < 70) {
+            //     navigator.heading = Math.round(params.heading);
+            // }
+            // else {
+            //     navigator.heading = params.heading;
+            // }
             navigator.lookAtLocation.copy(params.origin);
             navigator.lookAtLocation.altitude = altitude;
             navigator.tilt = tilt;
@@ -584,6 +588,7 @@ define([
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.handleFling3D = function (recognizer) {
+            if(this.doubleClick) this.handleDoubleClickFling(recognizer);
 
             if (recognizer.state === WorldWind.RECOGNIZED) {
                 var navigator = this.wwd.navigator;
@@ -818,6 +823,56 @@ define([
             }
         };
 
+        BasicWorldWindowController.prototype.handleDoubleClickFling = function (recognizer) {
+            console.log("in dc ")
+            if (recognizer.state === WorldWind.RECOGNIZED) {
+                var navigator = this.wwd.navigator;
+
+                var animationDuration = 1500; // ms
+                var lastLocation = new Location();
+                lastLocation.copy(navigator.lookAtLocation);
+
+ 
+                console.log("should zoom with fling")
+
+                // Start time of this animation
+                var startTime = new Date();
+
+                // Animation Loop
+                var controller = this;
+                var scale = 1;
+                var animate = function () {
+                    controller.flingAnimationId = -1;
+
+                    if (!lastLocation.equals(navigator.lookAtLocation)) {
+                        // The navigator was changed externally. Aborting the animation.
+                        return;
+                    }
+
+                    // Compute the delta to apply using a sinusoidal out easing
+                    var elapsed = (new Date() - startTime) / animationDuration;
+                    elapsed = elapsed > 1 ? 1 : elapsed;
+                    var value = Math.sin(elapsed * Math.PI / 2);
+
+                    scale = 1 - ( (controller.lastdeltaScale - value) / 200);
+                    navigator.range *= scale
+
+                    controller.applyLimits();
+                    controller.wwd.redraw();
+
+                    // If we haven't reached the animation duration, request a new frame
+                    if (elapsed < 1 ) {
+                        controller.flingAnimationId = requestAnimationFrame(animate);
+                    }
+                };
+
+                this.flingAnimationId = requestAnimationFrame(animate);
+            
+                
+            }
+
+        }
+
         BasicWorldWindowController.prototype.handleDoubleClickDragOrPan = function (recognizer) {
 
             var state = recognizer.state;
@@ -840,6 +895,9 @@ define([
     
                 // Apply the scale to this navigator's properties.
                 navigator.range *= scale;
+
+                this.lastdeltaScale = deltaScale
+
                 this.applyLimits();
                 this.wwd.redraw();
     
