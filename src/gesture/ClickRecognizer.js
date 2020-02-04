@@ -95,6 +95,8 @@ define(['../gesture/GestureRecognizer'],
 
                 // recognize gesture on last mouse down
                 if(this.recogniseOnLastMouseDown && this.clicks.length == this.numberOfClicks) {
+                    this.clientX = this.clicks[0].clientX;
+                    this.clientY = this.clicks[0].clientY;
                     this.state = WorldWind.RECOGNIZED;
                 }
 

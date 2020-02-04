@@ -32169,6 +32169,8 @@ define('gesture/ClickRecognizer',['../gesture/GestureRecognizer'],
 
                 // recognize gesture on last mouse down
                 if(this.recogniseOnLastMouseDown && this.clicks.length == this.numberOfClicks) {
+                    this.clientX = this.clicks[0].clientX;
+                    this.clientY = this.clicks[0].clientY;
                     this.state = WorldWind.RECOGNIZED;
                 }
 
@@ -33082,6 +33084,8 @@ define('gesture/TapRecognizer',['../gesture/GestureRecognizer'],
 
                 // recognize gesture on touch start
                 if(this.recognizeOnLastTouchStart && this.taps.length == this.numberOfTaps) {
+                    this.clientX = this.taps[0].clientX;
+                    this.clientY = this.taps[0].clientY;
                     this.state = WorldWind.RECOGNIZED;
                 }
                 
@@ -33091,6 +33095,12 @@ define('gesture/TapRecognizer',['../gesture/GestureRecognizer'],
                 tap.touchCount = this.touchCount; // max number of simultaneous touches
                 tap.clientX = this.clientX; // touch centroid
                 tap.clientY = this.clientY;
+                // recognize gesture on touch start
+                if(this.recognizeOnLastTouchStart && this.taps.length == this.numberOfTaps) {
+                    this.clientX = this.taps[0].clientX;
+                    this.clientY = this.taps[0].clientY;
+                    this.state = WorldWind.RECOGNIZED;
+                }
 
                 
             }
