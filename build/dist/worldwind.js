@@ -33088,6 +33088,8 @@ define('gesture/TapRecognizer',['../gesture/GestureRecognizer'],
 
                 // recognize gesture on last mouse down
                 if(this.recognizeOnLastTouchStart && this.taps.length == this.numberOfTaps) {
+                    this.clientX = this.taps[0].clientX;
+                    this.clientY = this.taps[0].clientY;    
                     this.state = WorldWind.RECOGNIZED;
                 }
                 
