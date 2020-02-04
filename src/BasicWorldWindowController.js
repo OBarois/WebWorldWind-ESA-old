@@ -143,6 +143,16 @@ define([
             this.clickRecognizer.addListener(this);
 
             // Intentionally not documented.
+            this.doubleClickRecognizer = new ClickRecognizer(this.wwd, null);
+            this.doubleClickRecognizer.addListener(this);
+            this.doubleClickRecognizer.numberOfClicks = 2;
+            this.doubleClickRecognizer.maxClickInterval = 200;
+            this.doubleClickRecognizer.clickClickDown = true;
+            this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.clickRecognizer);
+            this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
+
+
+            // Intentionally not documented.
             this.flingRecognizer = new FlingRecognizer(this.wwd, null);
             this.flingRecognizer.addListener(this);
             this.flingRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
@@ -242,12 +252,13 @@ define([
             var isArcBall = this.wwd.navigator.camera instanceof ArcBallCamera;
 
             // If a double click started the gesture, handle as a zoom
+            if (recognizer === this.doubleClickRecognizer) {
+                console.log("detected double click via www recognizer")
+                this.doubleClick = true
+            }
             
-             if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
-                if (this.doubleClick) {
-                    this.handleDoubleClickDragOrPan(recognizer)
-                }
-                else if (isArcBall) {
+            if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
+                 if (isArcBall) {
                     this.handlePanOrDrag(recognizer);
                     }
                     else {
@@ -302,7 +313,11 @@ define([
             if (this.wwd.globe.is2D()) {
                 this.handlePanOrDrag2D(recognizer);
             } else {
-                this.handlePanOrDrag3D(recognizer);
+                if (this.doubleClick) {
+                    this.handleDoubleClickDragOrPan(recognizer)
+                } else {
+                    this.handlePanOrDrag3D(recognizer);
+                }                
             }
         };
 
@@ -498,7 +513,11 @@ define([
             if (this.wwd.globe.is2D()) {
                 this.handleFling2D(recognizer);
             } else {
-                this.handleFling3D(recognizer);
+                if (this.doubleClick) {
+                } else {
+                    this.handleFling3D(recognizer);
+                }
+                
             }
         };
 
@@ -783,7 +802,7 @@ define([
                 this.wwd.redraw();
 
                 console.log("north lost")
-                this.keepNorthUp = false
+                this.northUpMode = false
                 this.detectNorthUp = true
             }
         };
