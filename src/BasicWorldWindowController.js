@@ -187,6 +187,7 @@ define([
             this.lastClickTime = 0;
             this.northUpMode = true;
             this.detectNorthUp = false;
+            this.lastDeltaScale = 0;
         };
 
         BasicWorldWindowController.prototype = Object.create(WorldWindowController.prototype);
