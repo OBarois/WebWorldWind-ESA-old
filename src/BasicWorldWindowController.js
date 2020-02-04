@@ -216,16 +216,22 @@ define([
                 // detect long click
                 if (this.readyToDetectLongClickBeforeMove) {
                     this.longClick = (e.timeStamp - this.lastClickTime > 1000)
+                    console.log("long long click: "+this.longClick)
                     this.readyToDetectLongClickBeforeMove = false                    
                 }
 
             }
 
-            // if (e.type === 'pointerup') {
-            //     // this.doubleClick = false
-            // }
+            if (e.type === 'pointerup') {
+                // this.doubleClick = false
+            }
 
             if (e.type === 'pointerdown') {
+                // detect double click/tap
+                if (!this.doubleClick) {
+                    this.doubleClick = (e.timeStamp - this.lastClickTime < 300)
+                    console.log("double click: "+this.doubleClick)
+                }
                 this.readyToDetectLongClickBeforeMove = true
                 this.lastClickTime = e.timeStamp
                 this.cancelFlingAnimation();
@@ -258,11 +264,11 @@ define([
 
             var isArcBall = this.wwd.navigator.camera instanceof ArcBallCamera;
 
-            // If a double click started the gesture, handle as a zoom
-            if (recognizer === this.doubleClickRecognizer || recognizer === this.doubleTapRecognizer) {
-                console.log("double")
-                this.doubleClick = true
-            }
+            // // If a double click started the gesture, handle as a zoom
+            // if (recognizer === this.doubleClickRecognizer || recognizer === this.doubleTapRecognizer) {
+            //     console.log("double")
+            //     this.doubleClick = true
+            // }
             
             if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
                  if (isArcBall) {
