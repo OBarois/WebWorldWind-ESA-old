@@ -48,6 +48,10 @@ define(['../gesture/GestureRecognizer'],
              */
             this.numberOfTouches = 1;
 
+            // Intentionally not documented. Set to true to detect gesture on last touch start instead of last touch end
+            this.recognizeOnLastTouchStart = false;
+
+
             // Intentionally not documented.
             this.maxTouchMovement = 20;
 
@@ -106,6 +110,12 @@ define(['../gesture/GestureRecognizer'],
                 tap.touchCount = this.touchCount; // max number of simultaneous touches
                 tap.clientX = this.clientX; // touch centroid
                 tap.clientY = this.clientY;
+
+                // recognize gesture on last mouse down
+                if(this.recognizeOnLastTouchStart && this.taps.length == this.numberOfTaps) {
+                    this.state = WorldWind.RECOGNIZED;
+                }
+                
             }
         };
 

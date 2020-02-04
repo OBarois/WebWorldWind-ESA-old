@@ -147,10 +147,18 @@ define([
             this.doubleClickRecognizer.addListener(this);
             this.doubleClickRecognizer.numberOfClicks = 2;
             this.doubleClickRecognizer.maxClickInterval = 200;
-            this.doubleClickRecognizer.clickClickDown = true;
+            this.doubleClickRecognizer.recogniseOnLastMouseDown = true;
             this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.clickRecognizer);
             this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
 
+            // Intentionally not documented.
+            this.doubleTapRecognizer = new ClickRecognizer(this.wwd, null);
+            this.doubleTapRecognizer.addListener(this);
+            this.doubleTapRecognizer.numberOfTaps = 2;
+            this.doubleTapRecognizer.maxTapInterval = 200;
+            this.doubleTapRecognizer.recognizeOnLastTouchStart = true;
+            this.doubleTapRecognizer.recognizeSimultaneouslyWith(this.tapRecognizer);
+            this.doubleTapRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);            
 
             // Intentionally not documented.
             this.flingRecognizer = new FlingRecognizer(this.wwd, null);
@@ -160,6 +168,7 @@ define([
             this.flingRecognizer.recognizeSimultaneouslyWith(this.pinchRecognizer);
             this.flingRecognizer.recognizeSimultaneouslyWith(this.rotationRecognizer);
             this.flingRecognizer.recognizeSimultaneouslyWith(this.doubleClickRecognizer);
+            this.flingRecognizer.recognizeSimultaneouslyWith(this.doubleTapRecognizer);
 
             // Intentionally not documented.
             this.beginPoint = new Vec2(0, 0);
@@ -182,8 +191,9 @@ define([
             this.scratchMatrix = Matrix.fromIdentity();
 
             this.doubleClick = false;
+            this.tripleCLick = false;
             this.longClick = false;
-            this.readyToDetectLongClickBeforeMove = false;
+            this.readyToDetectLongClickBeforeMove = true;
             this.lastClickTime = 0;
             this.northUpMode = true;
             this.detectNorthUp = false;
@@ -206,25 +216,20 @@ define([
                 // detect long click
                 if (this.readyToDetectLongClickBeforeMove) {
                     this.longClick = (e.timeStamp - this.lastClickTime > 1000)
-                    console.log("longggg click: "+this.longClick)
                     this.readyToDetectLongClickBeforeMove = false                    
                 }
 
             }
 
-            if (e.type === 'pointerup') {
-                // this.doubleClick = false
-            }
+            // if (e.type === 'pointerup') {
+            //     // this.doubleClick = false
+            // }
 
             if (e.type === 'pointerdown') {
-                // // detect double click/tap
-                // if (!this.doubleClick) {
-                //     this.doubleClick = (e.timeStamp - this.lastClickTime < 300)
-                // }
-                // this.readyToDetectLongClickBeforeMove = true
-                // this.lastClickTime = e.timeStamp
+                this.readyToDetectLongClickBeforeMove = true
+                this.lastClickTime = e.timeStamp
                 this.cancelFlingAnimation();
-                // this.longClick = false;
+                this.longClick = false;
             }
 
             if (!handled) {
@@ -247,15 +252,15 @@ define([
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.gestureStateChanged = function (recognizer) {
-            if (recognizer.state === WorldWind.BEGAN || recognizer.state === WorldWind.RECOGNIZED) {
-                this.cancelFlingAnimation();
-            }
+            // if (recognizer.state === WorldWind.BEGAN || recognizer.state === WorldWind.RECOGNIZED) {
+            //     this.cancelFlingAnimation();
+            // }
 
             var isArcBall = this.wwd.navigator.camera instanceof ArcBallCamera;
 
             // If a double click started the gesture, handle as a zoom
-            if (recognizer === this.doubleClickRecognizer) {
-                console.log("detected double click via www recognizer")
+            if (recognizer === this.doubleClickRecognizer || recognizer === this.doubleTapRecognizer) {
+                console.log("double")
                 this.doubleClick = true
             }
             
@@ -331,7 +336,7 @@ define([
             var y = recognizer.clientY;
 
             if (state === WorldWind.BEGAN) {
-                this.cancelFlingAnimation();
+                // this.cancelFlingAnimation();
                 var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(x, y));
                 if (!wwd.globe.intersectsLine(ray, this.beginIntersectionPoint)) {
                     return;
@@ -515,7 +520,6 @@ define([
             if (this.wwd.globe.is2D()) {
                 this.handleFling2D(recognizer);
             } else {
-                console.log("double click in fling: "+this.doubleClick)
                 if (this.doubleClick) {
                     this.handleDoubleClickFling(recognizer);
                 } else {
@@ -600,7 +604,6 @@ define([
 
                 var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(this.lastPoint[0], this.lastPoint[1]));
                 if (!wwd.globe.intersectsLine(ray, this.lastIntersectionPoint)) {
-                    console.log('lost1!')
                     return;
                 }
                 wwd.globe.computePositionFromPoint(this.lastIntersectionPoint[0], this.lastIntersectionPoint[1], this.lastIntersectionPoint[2], this.lastIntersectionPosition);
@@ -609,13 +612,11 @@ define([
                 if (shouldUseSphereRotation) {
                     var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(this.beginPoint[0], this.beginPoint[1]));
                     if (!wwd.globe.intersectsLine(ray, this.beginIntersectionPoint)) {
-                        console.log('lost2!')
                         return;
                     }
 
                     rotationAngle = this.computeRotationVectorAndAngle(this.beginIntersectionPoint, this.lastIntersectionPoint, this.rotationVector);
                     if (!isFinite(rotationAngle) || !isFinite(this.rotationVector[0]) || !isFinite(this.rotationVector[1]) || !isFinite(this.rotationVector[2])) {
-                        console.log('lost3!')
                         return;
                     }
                 }
@@ -630,10 +631,10 @@ define([
                 var animate = function () {
                     controller.flingAnimationId = -1;
 
-                    if (!lastLocation.equals(navigator.lookAtLocation)) {
-                        // The navigator was changed externally. Aborting the animation.
-                        return;
-                    }
+                    // if (!lastLocation.equals(navigator.lookAtLocation)) {
+                    //     // The navigator was changed externally. Aborting the animation.
+                    //     return;
+                    // }
 
                     // Compute the delta to apply using a sinusoidal out easing
                     var elapsed = (new Date() - startTime) / (controller.longClick?6000000:animationDuration);
@@ -675,6 +676,7 @@ define([
             if (this.flingAnimationId !== -1) {
                 cancelAnimationFrame(this.flingAnimationId);
                 this.flingAnimationId = -1;
+
             }
         };
 
@@ -704,12 +706,10 @@ define([
                 // If the keepNorthUp flag is true, will lock the heading to North when the rotation comes close
                 if (isArcBall) {
                     if(Math.abs(navigator.heading) < 10 && this.detectNorthUp) {
-                        console.log("north up"+navigator.heading)
                         this.northUpMode = this.keepNorthUp
                         navigator.heading = 0
                         // this.detectNorthUp=true;
                     } else {
-                        console.log("north lost")
                         this.northUpMode = false;
                         navigator.heading = this.beginHeading + headingDegrees;
                         if(Math.abs(navigator.heading) > 10) {
@@ -805,7 +805,6 @@ define([
                 this.applyLimits();
                 this.wwd.redraw();
 
-                console.log("north lost")
                 this.northUpMode = false
                 this.detectNorthUp = true
             }
@@ -834,6 +833,7 @@ define([
     
                 // Apply the scale to this navigator's properties.
                 navigator.range *= scale;
+                this.lastdeltaScale = deltaScale
                 this.applyLimits();
                 this.wwd.redraw();
     
@@ -845,12 +845,9 @@ define([
             if (recognizer.state === WorldWind.RECOGNIZED) {
                 var navigator = this.wwd.navigator;
 
-                var animationDuration = 1500; // ms
+                var animationDuration = 500; // ms
                 var lastLocation = new Location();
                 lastLocation.copy(navigator.lookAtLocation);
-
- 
-                console.log("should zoom with fling")
 
                 // Start time of this animation
                 var startTime = new Date();
@@ -884,6 +881,7 @@ define([
                 };
 
                 this.flingAnimationId = requestAnimationFrame(animate);
+                this.doubleClick = false
             
                 
             }
@@ -894,7 +892,7 @@ define([
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.handleWheelEvent = function (event) {
-            this.cancelFlingAnimation();
+            // this.cancelFlingAnimation();
 
             var navigator = this.wwd.navigator;
             // Normalize the wheel delta based on the wheel delta mode. This produces a roughly consistent delta across

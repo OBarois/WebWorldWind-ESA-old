@@ -48,8 +48,8 @@ define(['../gesture/GestureRecognizer'],
              */
             this.button = 0;
 
-            // Intentionally not documented. Set to true to detect click click down (as in google map zoom gesture)
-            this.clickClickDown = false;
+            // Intentionally not documented. Set to true to detect gesture on last mouse down instead of last mouse up
+            this.recogniseOnLastMouseDown = false;
 
             // Intentionally not documented.
             this.maxMouseMovement = 5;
@@ -93,8 +93,8 @@ define(['../gesture/GestureRecognizer'],
                 this.clicks.push(click);
                 this.failAfterDelay(this.maxClickDuration); // fail if the click is down too long
 
-                // handle double click down gesture
-                if(this.clickClickDown && this.clicks.length == this.numberOfClicks) {
+                // recognize gesture on last mouse down
+                if(this.recogniseOnLastMouseDown && this.clicks.length == this.numberOfClicks) {
                     this.state = WorldWind.RECOGNIZED;
                 }
 

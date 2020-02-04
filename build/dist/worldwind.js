@@ -32122,6 +32122,9 @@ define('gesture/ClickRecognizer',['../gesture/GestureRecognizer'],
              */
             this.button = 0;
 
+            // Intentionally not documented. Set to true to detect gesture on last mouse down instead of last mouse up
+            this.recogniseOnLastMouseDown = false;
+
             // Intentionally not documented.
             this.maxMouseMovement = 5;
 
@@ -32163,6 +32166,13 @@ define('gesture/ClickRecognizer',['../gesture/GestureRecognizer'],
                 };
                 this.clicks.push(click);
                 this.failAfterDelay(this.maxClickDuration); // fail if the click is down too long
+
+                // recognize gesture on last mouse down
+                if(this.recogniseOnLastMouseDown && this.clicks.length == this.numberOfClicks) {
+                    this.state = WorldWind.RECOGNIZED;
+                }
+
+
             }
         };
 
@@ -33013,6 +33023,10 @@ define('gesture/TapRecognizer',['../gesture/GestureRecognizer'],
              */
             this.numberOfTouches = 1;
 
+            // Intentionally not documented. Set to true to detect gesture on last touch start instead of last touch end
+            this.recognizeOnLastTouchStart = false;
+
+
             // Intentionally not documented.
             this.maxTouchMovement = 20;
 
@@ -33071,6 +33085,12 @@ define('gesture/TapRecognizer',['../gesture/GestureRecognizer'],
                 tap.touchCount = this.touchCount; // max number of simultaneous touches
                 tap.clientX = this.clientX; // touch centroid
                 tap.clientY = this.clientY;
+
+                // recognize gesture on last mouse down
+                if(this.recognizeOnLastTouchStart && this.taps.length == this.numberOfTaps) {
+                    this.state = WorldWind.RECOGNIZED;
+                }
+                
             }
         };
 
@@ -33541,12 +33561,32 @@ define('BasicWorldWindowController',[
             this.clickRecognizer.addListener(this);
 
             // Intentionally not documented.
+            this.doubleClickRecognizer = new ClickRecognizer(this.wwd, null);
+            this.doubleClickRecognizer.addListener(this);
+            this.doubleClickRecognizer.numberOfClicks = 2;
+            this.doubleClickRecognizer.maxClickInterval = 200;
+            this.doubleClickRecognizer.recogniseOnLastMouseDown = true;
+            this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.clickRecognizer);
+            this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
+
+            // Intentionally not documented.
+            this.doubleTapRecognizer = new ClickRecognizer(this.wwd, null);
+            this.doubleTapRecognizer.addListener(this);
+            this.doubleTapRecognizer.numberOfTaps = 2;
+            this.doubleTapRecognizer.maxTapInterval = 200;
+            this.doubleTapRecognizer.recognizeOnLastTouchStart = true;
+            this.doubleTapRecognizer.recognizeSimultaneouslyWith(this.tapRecognizer);
+            this.doubleTapRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);            
+
+            // Intentionally not documented.
             this.flingRecognizer = new FlingRecognizer(this.wwd, null);
             this.flingRecognizer.addListener(this);
             this.flingRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
             this.flingRecognizer.recognizeSimultaneouslyWith(this.panRecognizer);
             this.flingRecognizer.recognizeSimultaneouslyWith(this.pinchRecognizer);
             this.flingRecognizer.recognizeSimultaneouslyWith(this.rotationRecognizer);
+            this.flingRecognizer.recognizeSimultaneouslyWith(this.doubleClickRecognizer);
+            this.flingRecognizer.recognizeSimultaneouslyWith(this.doubleTapRecognizer);
 
             // Intentionally not documented.
             this.beginPoint = new Vec2(0, 0);
@@ -33569,11 +33609,13 @@ define('BasicWorldWindowController',[
             this.scratchMatrix = Matrix.fromIdentity();
 
             this.doubleClick = false;
+            this.tripleCLick = false;
             this.longClick = false;
-            this.readyToDetectLongClickBeforeMove = false;
+            this.readyToDetectLongClickBeforeMove = true;
             this.lastClickTime = 0;
             this.northUpMode = true;
             this.detectNorthUp = false;
+            this.lastDeltaScale = 0;
         };
 
         BasicWorldWindowController.prototype = Object.create(WorldWindowController.prototype);
@@ -33592,21 +33634,16 @@ define('BasicWorldWindowController',[
                 // detect long click
                 if (this.readyToDetectLongClickBeforeMove) {
                     this.longClick = (e.timeStamp - this.lastClickTime > 1000)
-                    console.log("longggg click: "+this.longClick)
                     this.readyToDetectLongClickBeforeMove = false                    
                 }
 
             }
 
-            if (e.type === 'pointerup') {
-                this.doubleClick = false
-            }
+            // if (e.type === 'pointerup') {
+            //     // this.doubleClick = false
+            // }
 
             if (e.type === 'pointerdown') {
-                // detect double click/tap
-                if (!this.doubleClick) {
-                    this.doubleClick = (e.timeStamp - this.lastClickTime < 300)
-                }
                 this.readyToDetectLongClickBeforeMove = true
                 this.lastClickTime = e.timeStamp
                 this.cancelFlingAnimation();
@@ -33633,19 +33670,20 @@ define('BasicWorldWindowController',[
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.gestureStateChanged = function (recognizer) {
-            if (recognizer.state === WorldWind.BEGAN || recognizer.state === WorldWind.RECOGNIZED) {
-                this.cancelFlingAnimation();
-            }
+            // if (recognizer.state === WorldWind.BEGAN || recognizer.state === WorldWind.RECOGNIZED) {
+            //     this.cancelFlingAnimation();
+            // }
 
             var isArcBall = this.wwd.navigator.camera instanceof ArcBallCamera;
 
             // If a double click started the gesture, handle as a zoom
+            if (recognizer === this.doubleClickRecognizer || recognizer === this.doubleTapRecognizer) {
+                console.log("double")
+                this.doubleClick = true
+            }
             
-             if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
-                if (this.doubleClick) {
-                    this.handleDoubleClickDragOrPan(recognizer)
-                }
-                else if (isArcBall) {
+            if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
+                 if (isArcBall) {
                     this.handlePanOrDrag(recognizer);
                     }
                     else {
@@ -33700,7 +33738,11 @@ define('BasicWorldWindowController',[
             if (this.wwd.globe.is2D()) {
                 this.handlePanOrDrag2D(recognizer);
             } else {
-                this.handlePanOrDrag3D(recognizer);
+                if (this.doubleClick) {
+                    this.handleDoubleClickDragOrPan(recognizer)
+                } else {
+                    this.handlePanOrDrag3D(recognizer);
+                }                
             }
         };
 
@@ -33712,7 +33754,7 @@ define('BasicWorldWindowController',[
             var y = recognizer.clientY;
 
             if (state === WorldWind.BEGAN) {
-                this.cancelFlingAnimation();
+                // this.cancelFlingAnimation();
                 var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(x, y));
                 if (!wwd.globe.intersectsLine(ray, this.beginIntersectionPoint)) {
                     return;
@@ -33896,7 +33938,12 @@ define('BasicWorldWindowController',[
             if (this.wwd.globe.is2D()) {
                 this.handleFling2D(recognizer);
             } else {
-                this.handleFling3D(recognizer);
+                if (this.doubleClick) {
+                    this.handleDoubleClickFling(recognizer);
+                } else {
+                    this.handleFling3D(recognizer);
+                }
+                
             }
         };
 
@@ -33975,7 +34022,6 @@ define('BasicWorldWindowController',[
 
                 var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(this.lastPoint[0], this.lastPoint[1]));
                 if (!wwd.globe.intersectsLine(ray, this.lastIntersectionPoint)) {
-                    console.log('lost1!')
                     return;
                 }
                 wwd.globe.computePositionFromPoint(this.lastIntersectionPoint[0], this.lastIntersectionPoint[1], this.lastIntersectionPoint[2], this.lastIntersectionPosition);
@@ -33984,13 +34030,11 @@ define('BasicWorldWindowController',[
                 if (shouldUseSphereRotation) {
                     var ray = wwd.rayThroughScreenPoint(wwd.canvasCoordinates(this.beginPoint[0], this.beginPoint[1]));
                     if (!wwd.globe.intersectsLine(ray, this.beginIntersectionPoint)) {
-                        console.log('lost2!')
                         return;
                     }
 
                     rotationAngle = this.computeRotationVectorAndAngle(this.beginIntersectionPoint, this.lastIntersectionPoint, this.rotationVector);
                     if (!isFinite(rotationAngle) || !isFinite(this.rotationVector[0]) || !isFinite(this.rotationVector[1]) || !isFinite(this.rotationVector[2])) {
-                        console.log('lost3!')
                         return;
                     }
                 }
@@ -34005,10 +34049,10 @@ define('BasicWorldWindowController',[
                 var animate = function () {
                     controller.flingAnimationId = -1;
 
-                    if (!lastLocation.equals(navigator.lookAtLocation)) {
-                        // The navigator was changed externally. Aborting the animation.
-                        return;
-                    }
+                    // if (!lastLocation.equals(navigator.lookAtLocation)) {
+                    //     // The navigator was changed externally. Aborting the animation.
+                    //     return;
+                    // }
 
                     // Compute the delta to apply using a sinusoidal out easing
                     var elapsed = (new Date() - startTime) / (controller.longClick?6000000:animationDuration);
@@ -34050,6 +34094,7 @@ define('BasicWorldWindowController',[
             if (this.flingAnimationId !== -1) {
                 cancelAnimationFrame(this.flingAnimationId);
                 this.flingAnimationId = -1;
+
             }
         };
 
@@ -34079,12 +34124,10 @@ define('BasicWorldWindowController',[
                 // If the keepNorthUp flag is true, will lock the heading to North when the rotation comes close
                 if (isArcBall) {
                     if(Math.abs(navigator.heading) < 10 && this.detectNorthUp) {
-                        console.log("north up"+navigator.heading)
                         this.northUpMode = this.keepNorthUp
                         navigator.heading = 0
                         // this.detectNorthUp=true;
                     } else {
-                        console.log("north lost")
                         this.northUpMode = false;
                         navigator.heading = this.beginHeading + headingDegrees;
                         if(Math.abs(navigator.heading) > 10) {
@@ -34180,12 +34223,12 @@ define('BasicWorldWindowController',[
                 this.applyLimits();
                 this.wwd.redraw();
 
-                console.log("north lost")
-                this.keepNorthUp = false
+                this.northUpMode = false
                 this.detectNorthUp = true
             }
         };
 
+        // Intentionally not documented.
         BasicWorldWindowController.prototype.handleDoubleClickDragOrPan = function (recognizer) {
 
             var state = recognizer.state;
@@ -34208,20 +34251,66 @@ define('BasicWorldWindowController',[
     
                 // Apply the scale to this navigator's properties.
                 navigator.range *= scale;
+                this.lastdeltaScale = deltaScale
                 this.applyLimits();
                 this.wwd.redraw();
     
             }
-
-
-
-            
         }
+
+        // Intentionally not documented.
+        BasicWorldWindowController.prototype.handleDoubleClickFling = function (recognizer) {
+            if (recognizer.state === WorldWind.RECOGNIZED) {
+                var navigator = this.wwd.navigator;
+
+                var animationDuration = 500; // ms
+                var lastLocation = new Location();
+                lastLocation.copy(navigator.lookAtLocation);
+
+                // Start time of this animation
+                var startTime = new Date();
+
+                // Animation Loop
+                var controller = this;
+                var scale = 1;
+                var animate = function () {
+                    controller.flingAnimationId = -1;
+
+                    if (!lastLocation.equals(navigator.lookAtLocation)) {
+                        // The navigator was changed externally. Aborting the animation.
+                        return;
+                    }
+
+                    // Compute the delta to apply using a sinusoidal out easing
+                    var elapsed = (new Date() - startTime) / animationDuration;
+                    elapsed = elapsed > 1 ? 1 : elapsed;
+                    var value = Math.sin(elapsed * Math.PI / 2);
+
+                    scale = 1 - ( (controller.lastdeltaScale - value) / 200);
+                    navigator.range *= scale
+
+                    controller.applyLimits();
+                    controller.wwd.redraw();
+
+                    // If we haven't reached the animation duration, request a new frame
+                    if (elapsed < 1 ) {
+                        controller.flingAnimationId = requestAnimationFrame(animate);
+                    }
+                };
+
+                this.flingAnimationId = requestAnimationFrame(animate);
+                this.doubleClick = false
+            
+                
+            }
+
+        }
+
 
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.handleWheelEvent = function (event) {
-            this.cancelFlingAnimation();
+            // this.cancelFlingAnimation();
 
             var navigator = this.wwd.navigator;
             // Normalize the wheel delta based on the wheel delta mode. This produces a roughly consistent delta across
