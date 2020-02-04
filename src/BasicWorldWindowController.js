@@ -159,6 +159,7 @@ define([
             this.flingRecognizer.recognizeSimultaneouslyWith(this.panRecognizer);
             this.flingRecognizer.recognizeSimultaneouslyWith(this.pinchRecognizer);
             this.flingRecognizer.recognizeSimultaneouslyWith(this.rotationRecognizer);
+            this.flingRecognizer.recognizeSimultaneouslyWith(this.doubleClickRecognizer);
 
             // Intentionally not documented.
             this.beginPoint = new Vec2(0, 0);
@@ -211,18 +212,18 @@ define([
             }
 
             if (e.type === 'pointerup') {
-                this.doubleClick = false
+                // this.doubleClick = false
             }
 
             if (e.type === 'pointerdown') {
-                // detect double click/tap
-                if (!this.doubleClick) {
-                    this.doubleClick = (e.timeStamp - this.lastClickTime < 300)
-                }
-                this.readyToDetectLongClickBeforeMove = true
-                this.lastClickTime = e.timeStamp
+                // // detect double click/tap
+                // if (!this.doubleClick) {
+                //     this.doubleClick = (e.timeStamp - this.lastClickTime < 300)
+                // }
+                // this.readyToDetectLongClickBeforeMove = true
+                // this.lastClickTime = e.timeStamp
                 this.cancelFlingAnimation();
-                this.longClick = false;
+                // this.longClick = false;
             }
 
             if (!handled) {
@@ -513,7 +514,9 @@ define([
             if (this.wwd.globe.is2D()) {
                 this.handleFling2D(recognizer);
             } else {
+                console.log("double click in fling: "+this.doubleClick)
                 if (this.doubleClick) {
+                    this.handleDoubleClickFling(recognizer);
                 } else {
                     this.handleFling3D(recognizer);
                 }
@@ -807,6 +810,7 @@ define([
             }
         };
 
+        // Intentionally not documented.
         BasicWorldWindowController.prototype.handleDoubleClickDragOrPan = function (recognizer) {
 
             var state = recognizer.state;
@@ -833,11 +837,58 @@ define([
                 this.wwd.redraw();
     
             }
-
-
-
-            
         }
+
+        // Intentionally not documented.
+        BasicWorldWindowController.prototype.handleDoubleClickFling = function (recognizer) {
+            if (recognizer.state === WorldWind.RECOGNIZED) {
+                var navigator = this.wwd.navigator;
+
+                var animationDuration = 1500; // ms
+                var lastLocation = new Location();
+                lastLocation.copy(navigator.lookAtLocation);
+
+ 
+                console.log("should zoom with fling")
+
+                // Start time of this animation
+                var startTime = new Date();
+
+                // Animation Loop
+                var controller = this;
+                var scale = 1;
+                var animate = function () {
+                    controller.flingAnimationId = -1;
+
+                    if (!lastLocation.equals(navigator.lookAtLocation)) {
+                        // The navigator was changed externally. Aborting the animation.
+                        return;
+                    }
+
+                    // Compute the delta to apply using a sinusoidal out easing
+                    var elapsed = (new Date() - startTime) / animationDuration;
+                    elapsed = elapsed > 1 ? 1 : elapsed;
+                    var value = Math.sin(elapsed * Math.PI / 2);
+
+                    scale = 1 - ( (controller.lastdeltaScale - value) / 200);
+                    navigator.range *= scale
+
+                    controller.applyLimits();
+                    controller.wwd.redraw();
+
+                    // If we haven't reached the animation duration, request a new frame
+                    if (elapsed < 1 ) {
+                        controller.flingAnimationId = requestAnimationFrame(animate);
+                    }
+                };
+
+                this.flingAnimationId = requestAnimationFrame(animate);
+            
+                
+            }
+
+        }
+
 
 
         // Intentionally not documented.
