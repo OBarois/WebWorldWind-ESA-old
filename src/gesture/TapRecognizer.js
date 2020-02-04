@@ -104,6 +104,12 @@ define(['../gesture/GestureRecognizer'],
                     clientY: this.clientY
                 };
                 this.taps.push(tap);
+
+                // recognize gesture on touch start
+                if(this.recognizeOnLastTouchStart && this.taps.length == this.numberOfTaps) {
+                    this.state = WorldWind.RECOGNIZED;
+                }
+                
                 this.failAfterDelay(this.maxTapDuration); // fail if the tap is down too long
             } else {
                 tap = this.taps[this.taps.length - 1];
@@ -111,12 +117,6 @@ define(['../gesture/GestureRecognizer'],
                 tap.clientX = this.clientX; // touch centroid
                 tap.clientY = this.clientY;
 
-                // recognize gesture on last mouse down
-                if(this.recognizeOnLastTouchStart && this.taps.length == this.numberOfTaps) {
-                    this.clientX = this.taps[0].clientX;
-                    this.clientY = this.taps[0].clientY;    
-                    this.state = WorldWind.RECOGNIZED;
-                }
                 
             }
         };
