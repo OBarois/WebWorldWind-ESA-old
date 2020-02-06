@@ -148,8 +148,8 @@ define([
             this.doubleClickRecognizer.numberOfClicks = 2;
             this.doubleClickRecognizer.maxClickInterval = 200;
             this.doubleClickRecognizer.recogniseOnLastMouseDown = true;
-            this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.clickRecognizer);
-            this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
+            // this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.clickRecognizer);
+            // this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
 
             // Intentionally not documented.
             this.doubleTapRecognizer = new ClickRecognizer(this.wwd, null);
@@ -157,8 +157,8 @@ define([
             this.doubleTapRecognizer.numberOfTaps = 2;
             this.doubleTapRecognizer.maxTapInterval = 200;
             this.doubleTapRecognizer.recognizeOnLastTouchStart = true;
-            this.doubleTapRecognizer.recognizeSimultaneouslyWith(this.tapRecognizer);
-            this.doubleTapRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);            
+            // this.doubleTapRecognizer.recognizeSimultaneouslyWith(this.tapRecognizer);
+            // this.doubleTapRecognizer.recognizeSimultaneouslyWith(this.panRecognizer);            
 
             // Intentionally not documented.
             this.flingRecognizer = new FlingRecognizer(this.wwd, null);
@@ -191,7 +191,6 @@ define([
             this.scratchMatrix = Matrix.fromIdentity();
 
             this.doubleClick = false;
-            this.tripleCLick = false;
             this.longClick = false;
             this.readyToDetectLongClickBeforeMove = true;
             this.lastClickTime = 0;
