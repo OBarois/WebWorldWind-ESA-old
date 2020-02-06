@@ -32400,7 +32400,7 @@ define('gesture/FlingRecognizer',['../gesture/GestureRecognizer'],
              * The minimum translation velocity that triggers a fling, in pixels per second.
              * @type {Number}
              */
-            this.minVelocity = 200;
+            this.minVelocity = 100;
 
             this._stackLimit = 5;
             this._positionStack = [];
@@ -32417,22 +32417,20 @@ define('gesture/FlingRecognizer',['../gesture/GestureRecognizer'],
                 x: event.clientX,
                 y: event.clientY}
             );
-            // console.log( this._positionStack[this._positionStack.length-1].time + ' / ' +this._positionStack[this._positionStack.length-1].x + ' / ' +this._positionStack[this._positionStack.length-1].y + ' / ' )
         };
 
         FlingRecognizer.prototype._getVelocity = function () {
             var stackLength = this._positionStack.length;
 
-            if (stackLength < 4 ) {
+            if (stackLength === 0) {
                 return {x: 0, y: 0};
             }
 
-            var startLocation = this._positionStack[stackLength - 3];
-            var midLocation = this._positionStack[stackLength - 2];
-            var endLocation = this._positionStack[stackLength - 1]; 
+            var startLocation = this._positionStack[0];
+            var endLocation = this._positionStack[stackLength - 1];
             this._positionStack.length = 0;
 
-            var elapsedTime = (endLocation.time - midLocation.time) / 1000;
+            var elapsedTime = (endLocation.time - startLocation.time) / 1000;
             var translationX = endLocation.x - startLocation.x;
             var translationY = endLocation.y - startLocation.y;
 
@@ -32449,7 +32447,6 @@ define('gesture/FlingRecognizer',['../gesture/GestureRecognizer'],
 
         // Documented in superclass.
         FlingRecognizer.prototype.mouseUp = function (event) {
-            this._pushEvent(event);
             this._checkForFling();
         };
 
@@ -32469,7 +32466,6 @@ define('gesture/FlingRecognizer',['../gesture/GestureRecognizer'],
         FlingRecognizer.prototype.touchEnd = function (touch) {
             // Check for a fling only when the last touch ends
             if (this.touchCount === 0) {
-                this._pushEvent(event);
                 this._checkForFling();
             } else {
                 this._positionStack.length = 0;
