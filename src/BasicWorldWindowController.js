@@ -98,6 +98,7 @@ define([
 
             // Intentionally not documented.
             this.primaryDragRecognizer = new DragRecognizer(this.wwd, null);
+            this.primaryDragRecognizer.numberOfClicks = 1;
             this.primaryDragRecognizer.addListener(this);
 
             // Intentionally not documented.
@@ -134,41 +135,81 @@ define([
             this.pinchRecognizer.requireRecognizerToFail(this.tiltRecognizer);
             this.rotationRecognizer.requireRecognizerToFail(this.tiltRecognizer);
 
-            // Intentionally not documented.
-            this.tapRecognizer = new TapRecognizer(this.wwd, null);
-            this.tapRecognizer.addListener(this);
+            // // Intentionally not documented.
+            // this.tapRecognizer = new TapRecognizer(this.wwd, null);
+            // this.tapRecognizer.addListener(this);
 
-            // Intentionally not documented.
-            this.clickRecognizer = new ClickRecognizer(this.wwd, null);
-            this.clickRecognizer.addListener(this);
+            // // Intentionally not documented.
+            // this.clickRecognizer = new ClickRecognizer(this.wwd, null);
+            // this.clickRecognizer.addListener(this);
 
-            // Intentionally not documented.
-            this.doubleClickRecognizer = new ClickRecognizer(this.wwd, null);
-            this.doubleClickRecognizer.addListener(this);
-            this.doubleClickRecognizer.numberOfClicks = 2;
-            this.doubleClickRecognizer.maxClickInterval = 200;
-            this.doubleClickRecognizer.recogniseOnLastMouseDown = true;
-            // this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.clickRecognizer);
+            // // Intentionally not documented.
+            // this.doubleClickRecognizer = new ClickRecognizer(this.wwd, null);
+            // this.doubleClickRecognizer.addListener(this);
+            // this.doubleClickRecognizer.numberOfClicks = 2;
+            // this.doubleClickRecognizer.maxClickInterval = 200;
+            // this.doubleClickRecognizer.recogniseOnLastMouseDown = true;
+            // this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.primaryDoubleClickDragRecognizer);
             // this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
 
+            // // Intentionally not documented.
+            // this.doubleTapRecognizer = new ClickRecognizer(this.wwd, null);
+            // this.doubleTapRecognizer.addListener(this);
+            // this.doubleTapRecognizer.numberOfTaps = 2;
+            // this.doubleTapRecognizer.maxTapInterval = 200;
+            // this.doubleTapRecognizer.recognizeOnLastTouchStart = true;
+            // // this.doubleTapRecognizer.recognizeSimultaneouslyWith(this.tapRecognizer);
+            // // this.doubleTapRecognizer.recognizeSimultaneouslyWith(this.panRecognizer);            
+
             // Intentionally not documented.
-            this.doubleTapRecognizer = new ClickRecognizer(this.wwd, null);
-            this.doubleTapRecognizer.addListener(this);
-            this.doubleTapRecognizer.numberOfTaps = 2;
-            this.doubleTapRecognizer.maxTapInterval = 200;
-            this.doubleTapRecognizer.recognizeOnLastTouchStart = true;
-            // this.doubleTapRecognizer.recognizeSimultaneouslyWith(this.tapRecognizer);
-            // this.doubleTapRecognizer.recognizeSimultaneouslyWith(this.panRecognizer);            
+            this.primaryDoubleClickDragRecognizer = new DragRecognizer(this.wwd, null);
+            this.primaryDoubleClickDragRecognizer.numberOfClicks = 2;
+            this.primaryDoubleClickDragRecognizer.addListener(this);
+            // this.primaryDoubleClickDragRecognizer.recognizeSimultaneouslyWith(this.doubleTapRecognizer);
+
+            // this.primaryDoubleClickDragRecognizer.recognizeSimultaneouslyWith(this.clickRecognizer);
+            // this.primaryDoubleClickDragRecognizer.recognizeSimultaneouslyWith(this.doubleClickRecognizer);
+            this.primaryDoubleClickDragRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
+            // this.primaryDoubleClickDragRecognizer.recognizeSimultaneouslyWith(this.secondaryDragRecognizer);
+            // this.primaryDragRecognizer.recognizeSimultaneouslyWith(this.primaryDoubleClickDragRecognizer);
+            // this.secondaryDragRecognizer.recognizeSimultaneouslyWith(this.primaryDoubleClickDragRecognizer);
+            // this.primaryDoubleClickDragRecognizer.recognizeSimultaneouslyWith(this.tiltRecognizer);
+            // this.primaryDragRecognizer.requireRecognizerToFail(this.primaryDoubleClickDragRecognizer);
+            // this.primaryDoubleClickDragRecognizer.requireRecognizerToFail(this.primaryDragRecognizer);
+
+
+
 
             // Intentionally not documented.
             this.flingRecognizer = new FlingRecognizer(this.wwd, null);
+            this.flingRecognizer.minVelocity = 300
+            this.flingRecognizer.numberOfClicksOrTaps = 1
             this.flingRecognizer.addListener(this);
             this.flingRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
+            this.flingRecognizer.recognizeSimultaneouslyWith(this.primaryDoubleClickDragRecognizer);
             this.flingRecognizer.recognizeSimultaneouslyWith(this.panRecognizer);
             this.flingRecognizer.recognizeSimultaneouslyWith(this.pinchRecognizer);
             this.flingRecognizer.recognizeSimultaneouslyWith(this.rotationRecognizer);
-            this.flingRecognizer.recognizeSimultaneouslyWith(this.doubleClickRecognizer);
-            this.flingRecognizer.recognizeSimultaneouslyWith(this.doubleTapRecognizer);
+            // this.flingRecognizer.recognizeSimultaneouslyWith(this.doubleTapRecognizer);
+            // this.flingRecognizer.recognizeSimultaneouslyWith(this.clickRecognizer);
+            // this.flingRecognizer.recognizeSimultaneouslyWith(this.doubleClickRecognizer);
+            // this.doubleFlingRecognizer.requireRecognizerToFail(this.flingRecognizer);
+
+            // Intentionally not documented.
+            this.doubleFlingRecognizer = new FlingRecognizer(this.wwd, null);
+            this.doubleFlingRecognizer.minVelocity = 300
+            this.doubleFlingRecognizer.numberOfClicksOrTaps = 2
+            this.doubleFlingRecognizer.addListener(this);
+            this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.primaryDoubleClickDragRecognizer);
+            // this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
+            // this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.doubleTapRecognizer);
+
+            // this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.panRecognizer);
+            // this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.pinchRecognizer);
+            // this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.rotationRecognizer);
+            // this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.clickRecognizer);
+            // this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.doubleClickRecognizer);
+            this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.flingRecognizer);
 
             // Intentionally not documented.
             this.beginPoint = new Vec2(0, 0);
@@ -228,7 +269,7 @@ define([
             if (e.type === 'pointerdown') {
                 // detect double click/tap
                 if (!this.doubleClick) {
-                    this.doubleClick = (e.timeStamp - this.lastClickTime < 300)
+                    // this.doubleClick = (e.timeStamp - this.lastClickTime < 300)
                     console.log("double click: "+this.doubleClick)
                 }
                 this.readyToDetectLongClickBeforeMove = true
@@ -264,12 +305,30 @@ define([
             var isArcBall = this.wwd.navigator.camera instanceof ArcBallCamera;
 
             // // If a double click started the gesture, handle as a zoom
+            // this.doubleClick = (recognizer === this.doubleClickRecognizer || recognizer === this.doubleTapRecognizer)
             // if (recognizer === this.doubleClickRecognizer || recognizer === this.doubleTapRecognizer) {
             //     console.log("double")
             //     this.doubleClick = true
-            // }
+            //     // must be set back to false at the end of a fling
+            // } else 
+
+            console.log("primaryDoubleClickDragRecognizer: "+this.primaryDoubleClickDragRecognizer.state)
+            console.log("primaryDragRecognizer: "+this.primaryDragRecognizer.state)
+            // console.log("panRecognizer: "+this.panRecognizer.state)
+            // console.log("secondaryDragRecognizer: "+this.secondaryDragRecognizer.state)
+            // console.log("pinchRecognizer: "+this.pinchRecognizer.state)
+            // console.log("rotationRecognizer: "+this.rotationRecognizer.state)
+            // console.log("tiltRecognizer: "+this.tiltRecognizer.state)
+
+            // console.log("flingRecognizer: "+this.flingRecognizer.state)
+            // console.log("doubleFlingRecognizer: "+this.doubleFlingRecognizer.state)
+
+            if ( recognizer === this.primaryDoubleClickDragRecognizer) {
+                    this.handleDoubleClickDragOrPan(recognizer);
+            }
+
             
-            if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
+            else if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
                  if (isArcBall) {
                     this.handlePanOrDrag(recognizer);
                     }
@@ -291,10 +350,23 @@ define([
             else if (recognizer === this.tiltRecognizer) {
                 this.handleTilt(recognizer);
             }
-            else if (recognizer === this.clickRecognizer || recognizer === this.tapRecognizer) {
-                this.handleClickOrTap(recognizer);
+            // else if (recognizer === this.clickRecognizer || recognizer === this.tapRecognizer) {
+            //     this.handleClickOrTap(recognizer);
+            // }
+            else if (recognizer === this.doubleFlingRecognizer) {
+                // if (recognizer === this.doubleClickRecognizer || recognizer === this.doubleTapRecognizer) {
+                //     this.handleDoubleClickFling(recognizer);
+                // } else {
+                //     this.handleFling(recognizer);
+                // }
+                this.handleDoubleClickFling(recognizer);
             }
             else if (recognizer === this.flingRecognizer) {
+                // if (recognizer === this.doubleClickRecognizer || recognizer === this.doubleTapRecognizer) {
+                //     this.handleDoubleClickFling(recognizer);
+                // } else {
+                //     this.handleFling(recognizer);
+                // }
                 this.handleFling(recognizer);
             }
         };
@@ -325,11 +397,12 @@ define([
             if (this.wwd.globe.is2D()) {
                 this.handlePanOrDrag2D(recognizer);
             } else {
-                if (this.doubleClick) {
-                    this.handleDoubleClickDragOrPan(recognizer)
-                } else {
-                    this.handlePanOrDrag3D(recognizer);
-                }                
+                this.handlePanOrDrag3D(recognizer);
+                // if (this.doubleClick) {
+                //     this.handleDoubleClickDragOrPan(recognizer)
+                // } else {
+                //     this.handlePanOrDrag3D(recognizer);
+                // }                
             }
         };
 
@@ -525,11 +598,12 @@ define([
             if (this.wwd.globe.is2D()) {
                 this.handleFling2D(recognizer);
             } else {
-                if (this.doubleClick) {
-                    this.handleDoubleClickFling(recognizer);
-                } else {
-                    this.handleFling3D(recognizer);
-                }
+                this.handleFling3D(recognizer);
+                // if (this.doubleClick) {
+                //     this.handleDoubleClickFling(recognizer);
+                // } else {
+                //     this.handleFling3D(recognizer);
+                // }
                 
             }
         };
@@ -884,9 +958,10 @@ define([
                         controller.flingAnimationId = requestAnimationFrame(animate);
                     }
                 };
-
+                // console.log("should zoom fling with value: ")
+                // return
                 this.flingAnimationId = requestAnimationFrame(animate);
-                this.doubleClick = false
+                // this.doubleClick = false
             
                 
             }

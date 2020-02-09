@@ -42,11 +42,35 @@ define(['../gesture/GestureRecognizer'],
              */
             this.minVelocity = 100;
 
+            this.button = 0
+
+            this.numberOfClicksOrTaps = 1;
+            this.maxClickInterval = 400;
+
+            // Intentionally not documented.
+            this.maxClickDuration = 500;
+
+
             this._stackLimit = 5;
             this._positionStack = [];
+            this.clickOrTapCounter = 0;
+
+            // Intentionally not documented.
+            this.timeout = null;
+
         };
 
         FlingRecognizer.prototype = Object.create(GestureRecognizer.prototype);
+
+        // Documented in superclass.
+        FlingRecognizer.prototype.reset = function () {
+            GestureRecognizer.prototype.reset.call(this);
+
+            this.clickOrTapCounter = 0;
+            this.cancelFailAfterDelay();
+
+        };
+        
 
         FlingRecognizer.prototype._pushEvent = function (event) {
             if (this._positionStack.length >= this._stackLimit) {
@@ -79,6 +103,27 @@ define(['../gesture/GestureRecognizer'],
                 y: translationY / elapsedTime,
             };
         };
+        
+        // Documented in superclass.
+        FlingRecognizer.prototype.touchStart = function (event) {
+            this.clickOrTapCounter += 1;
+        };
+
+        // Documented in superclass.
+        FlingRecognizer.prototype.mouseDown = function (event) {
+            if (this.state != WorldWind.POSSIBLE) {
+                return;
+            }
+
+            if (this.button != event.button) {
+                this.state = WorldWind.FAILED;
+            } else {
+                this.clickOrTapCounter += 1;
+                // this.failAfterDelay(this.maxClickDuration);
+                // this._checkForFling();
+            }
+        };
+        
 
         // Documented in superclass.
         FlingRecognizer.prototype.mouseMove = function (event) {
@@ -87,6 +132,13 @@ define(['../gesture/GestureRecognizer'],
 
         // Documented in superclass.
         FlingRecognizer.prototype.mouseUp = function (event) {
+            if (this.state !== WorldWind.POSSIBLE) {
+                return;
+            }
+            if (this.mouseButtonMask != 0) {
+                return; // wait until the last button is up
+            }
+            
             this._checkForFling();
         };
 
@@ -114,17 +166,46 @@ define(['../gesture/GestureRecognizer'],
 
         FlingRecognizer.prototype._checkForFling = function() {
             var velocity = this._getVelocity();
-
             if (this.state !== WorldWind.POSSIBLE) {
                 return;
             }
-
-            if (Math.abs(velocity.x) > this.minVelocity
-                || Math.abs(velocity.y) > this.minVelocity) {
+            if ( (Math.abs(velocity.x) > this.minVelocity
+                || Math.abs(velocity.y) > this.minVelocity) 
+                && this.numberOfClicksOrTaps == this.clickOrTapCounter) {
 
                 this.state = WorldWind.RECOGNIZED;
+                console.log("fling detected ("+this.numberOfClicksOrTaps+" taps)")
+            } else {
+                this.failAfterDelay(this.maxClickInterval); // fail if the interval between clicks is too long
+            }
+
+        };
+
+        // Intentionally not documented.
+        FlingRecognizer.prototype.failAfterDelay = function (delay) {
+            var self = this;
+            if (self.timeout) {
+                window.clearTimeout(self.timeout);
+            }
+
+            self.timeout = window.setTimeout(function () {
+                self.timeout = null;
+                if (self.state == WorldWind.POSSIBLE) {
+                    self.state = WorldWind.FAILED; // fail if we haven't already reached a terminal state
+                }
+            }, delay);
+        };
+
+        // Intentionally not documented.
+        FlingRecognizer.prototype.cancelFailAfterDelay = function () {
+            var self = this;
+            if (self.timeout) {
+                window.clearTimeout(self.timeout);
+                self.timeout = null;
             }
         };
+        
+        
 
         return FlingRecognizer;
     });
