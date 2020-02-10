@@ -32165,13 +32165,16 @@ define('gesture/ClickRecognizer',['../gesture/GestureRecognizer'],
                     clientY: this.clientY
                 };
                 this.clicks.push(click);
-                this.failAfterDelay(this.maxClickDuration); // fail if the click is down too long
+                
 
                 // recognize gesture on last mouse down
                 if(this.recogniseOnLastMouseDown && this.clicks.length == this.numberOfClicks) {
+                    console.log("double recognized")
                     this.clientX = this.clicks[0].clientX;
                     this.clientY = this.clicks[0].clientY;
                     this.state = WorldWind.RECOGNIZED;
+                } else {
+                    this.failAfterDelay(this.maxClickDuration); // fail if the click is down too long
                 }
 
 
@@ -32293,56 +32296,23 @@ define('gesture/DragRecognizer',['../gesture/GestureRecognizer'],
             this.button = 0;
 
             // Intentionally not documented.
-            this.interpretDistance = 3;
-            
-            this.numberOfClicks = 1;
-            this.clickCounter = 0;
-            this.maxClickInterval = 400;
-
-
+            this.interpretDistance = 5;
         };
-
-
 
         DragRecognizer.prototype = Object.create(GestureRecognizer.prototype);
 
         // Documented in superclass.
-        DragRecognizer.prototype.reset = function () {
-            GestureRecognizer.prototype.reset.call(this);
-            this.clickCounter = 0;
-            this.cancelFailAfterDelay();
-
-        };
-
-        // Documented in superclass.
-        DragRecognizer.prototype.mouseDown = function (event) {
-            if (this.state != WorldWind.POSSIBLE) {
-                return;
-            }
-
-            if (this.button != event.button) {
-                this.state = WorldWind.FAILED;
-            } else {
-                this.clickCounter += 1;
-                if ( this.numberOfClicks > 1 ) this.failAfterDelay(this.maxClickInterval)
-                if ( this.clickCounter > this.numberOfClicks  ) this.state = WorldWind.FAILED;
-
-            }
-        };
-
-
-        // Documented in superclass.
         DragRecognizer.prototype.mouseMove = function (event) {
             if (this.state == WorldWind.POSSIBLE) {
-
                 if (this.shouldInterpret()) {
                     if (this.shouldRecognize()) {
                         this.translationX = 0; // set translation to zero when the drag begins
                         this.translationY = 0;
                         this.state = WorldWind.BEGAN;
+                    } else {
+                        this.state = WorldWind.FAILED;
                     }
                 }
-                
             } else if (this.state == WorldWind.BEGAN || this.state == WorldWind.CHANGED) {
                 this.state = WorldWind.CHANGED;
             }
@@ -32352,7 +32322,10 @@ define('gesture/DragRecognizer',['../gesture/GestureRecognizer'],
         DragRecognizer.prototype.mouseUp = function (event) {
             if (this.mouseButtonMask == 0) { // last button up
                 if (this.state == WorldWind.POSSIBLE) {
-                } 
+                    this.state = WorldWind.FAILED;
+                } else if (this.state == WorldWind.BEGAN || this.state == WorldWind.CHANGED) {
+                    this.state = WorldWind.ENDED;
+                }
             }
         };
 
@@ -32372,9 +32345,7 @@ define('gesture/DragRecognizer',['../gesture/GestureRecognizer'],
             var dx = this.translationX,
                 dy = this.translationY,
                 distance = Math.sqrt(dx * dx + dy * dy);
-                
-
-            return (distance > this.interpretDistance && this.numberOfClicks == this.clickCounter); // interpret mouse movement when the cursor moves far enough
+            return distance > this.interpretDistance; // interpret mouse movement when the cursor moves far enough
         };
 
         /**
@@ -32384,36 +32355,11 @@ define('gesture/DragRecognizer',['../gesture/GestureRecognizer'],
          */
         DragRecognizer.prototype.shouldRecognize = function () {
             var buttonBit = (1 << this.button);
-            return (buttonBit == this.mouseButtonMask); // true when the specified button is the only button down
+            return buttonBit == this.mouseButtonMask; // true when the specified button is the only button down
         };
 
-        // Intentionally not documented.
-        DragRecognizer.prototype.failAfterDelay = function (delay) {
-            var self = this;
-            if (self.timeout) {
-                window.clearTimeout(self.timeout);
-            }
-
-            self.timeout = window.setTimeout(function () {
-                self.timeout = null;
-                if (self.state == WorldWind.POSSIBLE || self.state == WorldWind.BEGAN) {
-                    self.state = WorldWind.FAILED; // fail if we haven't already reached a terminal state
-                }
-            }, delay);
-        };
-
-
-        // Intentionally not documented.
-        DragRecognizer.prototype.cancelFailAfterDelay = function () {
-            var self = this;
-            if (self.timeout) {
-                window.clearTimeout(self.timeout);
-                self.timeout = null;
-            }
-        };
         return DragRecognizer;
     });
-
 /*
  * Copyright 2003-2006, 2009, 2017, United States Government, as represented by the Administrator of the
  * National Aeronautics and Space Administration. All rights reserved.
@@ -32563,6 +32509,7 @@ define('gesture/FlingRecognizer',['../gesture/GestureRecognizer'],
             if (this.touchCount === 1) {
                 this._pushEvent(event);
             }
+            
         };
 
         // Documented in superclass.
@@ -32572,12 +32519,20 @@ define('gesture/FlingRecognizer',['../gesture/GestureRecognizer'],
 
         // Documented in superclass.
         FlingRecognizer.prototype.touchEnd = function (touch) {
-            // Check for a fling only when the last touch ends
-            if (this.touchCount === 0) {
-                this._checkForFling();
-            } else {
-                this._positionStack.length = 0;
+            if (this.state !== WorldWind.POSSIBLE) {
+                return;
             }
+            // if (this.touchCount != 0) {
+            //     return;
+            // }
+            this._checkForFling();
+
+            // // Check for a fling only when the last touch ends
+            // if (this.touchCount === 0) {
+            //     this._checkForFling();
+            // } else {
+            //     this._positionStack.length = 0;
+            // }
         };
 
         FlingRecognizer.prototype._checkForFling = function() {
@@ -32759,7 +32714,6 @@ define('gesture/PanRecognizer',['../gesture/GestureRecognizer'],
 
         return PanRecognizer;
     });
-
 /*
  * Copyright 2003-2006, 2009, 2017, United States Government, as represented by the Administrator of the
  * National Aeronautics and Space Administration. All rights reserved.
@@ -33220,9 +33174,11 @@ define('gesture/TapRecognizer',['../gesture/GestureRecognizer'],
                     this.clientX = this.taps[0].clientX;
                     this.clientY = this.taps[0].clientY;
                     this.state = WorldWind.RECOGNIZED;
+                } else {
+                    this.failAfterDelay(this.maxTapDuration); // fail if the tap is down too long
                 }
                 
-                this.failAfterDelay(this.maxTapDuration); // fail if the tap is down too long
+                
             } else {
                 tap = this.taps[this.taps.length - 1];
                 tap.touchCount = this.touchCount; // max number of simultaneous touches
@@ -33706,42 +33662,22 @@ define('BasicWorldWindowController',[
             // this.clickRecognizer = new ClickRecognizer(this.wwd, null);
             // this.clickRecognizer.addListener(this);
 
-            // // Intentionally not documented.
-            // this.doubleClickRecognizer = new ClickRecognizer(this.wwd, null);
-            // this.doubleClickRecognizer.addListener(this);
-            // this.doubleClickRecognizer.numberOfClicks = 2;
-            // this.doubleClickRecognizer.maxClickInterval = 200;
-            // this.doubleClickRecognizer.recogniseOnLastMouseDown = true;
-            // this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.primaryDoubleClickDragRecognizer);
-            // this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
-
-            // // Intentionally not documented.
-            // this.doubleTapRecognizer = new ClickRecognizer(this.wwd, null);
-            // this.doubleTapRecognizer.addListener(this);
-            // this.doubleTapRecognizer.numberOfTaps = 2;
-            // this.doubleTapRecognizer.maxTapInterval = 200;
-            // this.doubleTapRecognizer.recognizeOnLastTouchStart = true;
-            // // this.doubleTapRecognizer.recognizeSimultaneouslyWith(this.tapRecognizer);
-            // // this.doubleTapRecognizer.recognizeSimultaneouslyWith(this.panRecognizer);            
+            // Intentionally not documented.
+            this.doubleClickRecognizer = new ClickRecognizer(this.wwd, null);
+            this.doubleClickRecognizer.addListener(this);
+            this.doubleClickRecognizer.numberOfClicks = 2;
+            this.doubleClickRecognizer.maxClickInterval = 200;
+            this.doubleClickRecognizer.recogniseOnLastMouseDown = true;
+            this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
+            this.doubleClickRecognizer.recognizeSimultaneouslyWith(this.secondaryDragRecognizer);
 
             // Intentionally not documented.
-            this.primaryDoubleClickDragRecognizer = new DragRecognizer(this.wwd, null);
-            this.primaryDoubleClickDragRecognizer.numberOfClicks = 2;
-            this.primaryDoubleClickDragRecognizer.addListener(this);
-            // this.primaryDoubleClickDragRecognizer.recognizeSimultaneouslyWith(this.doubleTapRecognizer);
-
-            // this.primaryDoubleClickDragRecognizer.recognizeSimultaneouslyWith(this.clickRecognizer);
-            // this.primaryDoubleClickDragRecognizer.recognizeSimultaneouslyWith(this.doubleClickRecognizer);
-            this.primaryDoubleClickDragRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
-            // this.primaryDoubleClickDragRecognizer.recognizeSimultaneouslyWith(this.secondaryDragRecognizer);
-            // this.primaryDragRecognizer.recognizeSimultaneouslyWith(this.primaryDoubleClickDragRecognizer);
-            // this.secondaryDragRecognizer.recognizeSimultaneouslyWith(this.primaryDoubleClickDragRecognizer);
-            // this.primaryDoubleClickDragRecognizer.recognizeSimultaneouslyWith(this.tiltRecognizer);
-            // this.primaryDragRecognizer.requireRecognizerToFail(this.primaryDoubleClickDragRecognizer);
-            // this.primaryDoubleClickDragRecognizer.requireRecognizerToFail(this.primaryDragRecognizer);
-
-
-
+            this.doubleTapRecognizer = new TapRecognizer(this.wwd, null);
+            this.doubleTapRecognizer.addListener(this);
+            this.doubleTapRecognizer.numberOfTaps = 2;
+            this.doubleTapRecognizer.maxTapInterval = 200;
+            this.doubleTapRecognizer.recognizeOnLastTouchStart = true;
+            this.doubleTapRecognizer.recognizeSimultaneouslyWith(this.panRecognizer);            
 
             // Intentionally not documented.
             this.flingRecognizer = new FlingRecognizer(this.wwd, null);
@@ -33749,30 +33685,19 @@ define('BasicWorldWindowController',[
             this.flingRecognizer.numberOfClicksOrTaps = 1
             this.flingRecognizer.addListener(this);
             this.flingRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
-            this.flingRecognizer.recognizeSimultaneouslyWith(this.primaryDoubleClickDragRecognizer);
             this.flingRecognizer.recognizeSimultaneouslyWith(this.panRecognizer);
-            this.flingRecognizer.recognizeSimultaneouslyWith(this.pinchRecognizer);
-            this.flingRecognizer.recognizeSimultaneouslyWith(this.rotationRecognizer);
-            // this.flingRecognizer.recognizeSimultaneouslyWith(this.doubleTapRecognizer);
-            // this.flingRecognizer.recognizeSimultaneouslyWith(this.clickRecognizer);
-            // this.flingRecognizer.recognizeSimultaneouslyWith(this.doubleClickRecognizer);
-            // this.doubleFlingRecognizer.requireRecognizerToFail(this.flingRecognizer);
+            this.flingRecognizer.recognizeSimultaneouslyWith(this.doubleTapRecognizer);
+            this.flingRecognizer.recognizeSimultaneouslyWith(this.doubleClickRecognizer);
 
             // Intentionally not documented.
             this.doubleFlingRecognizer = new FlingRecognizer(this.wwd, null);
             this.doubleFlingRecognizer.minVelocity = 300
             this.doubleFlingRecognizer.numberOfClicksOrTaps = 2
             this.doubleFlingRecognizer.addListener(this);
-            this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.primaryDoubleClickDragRecognizer);
-            // this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
-            // this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.doubleTapRecognizer);
-
-            // this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.panRecognizer);
-            // this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.pinchRecognizer);
-            // this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.rotationRecognizer);
-            // this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.clickRecognizer);
-            // this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.doubleClickRecognizer);
-            this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.flingRecognizer);
+            this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.primaryDragRecognizer);
+            this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.doubleTapRecognizer);
+            this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.panRecognizer);
+            this.doubleFlingRecognizer.recognizeSimultaneouslyWith(this.doubleClickRecognizer);
 
             // Intentionally not documented.
             this.beginPoint = new Vec2(0, 0);
@@ -33833,7 +33758,7 @@ define('BasicWorldWindowController',[
                 // detect double click/tap
                 if (!this.doubleClick) {
                     // this.doubleClick = (e.timeStamp - this.lastClickTime < 300)
-                    console.log("double click: "+this.doubleClick)
+                    // console.log("double click: "+this.doubleClick)
                 }
                 this.readyToDetectLongClickBeforeMove = true
                 this.lastClickTime = e.timeStamp
@@ -33861,37 +33786,10 @@ define('BasicWorldWindowController',[
 
         // Intentionally not documented.
         BasicWorldWindowController.prototype.gestureStateChanged = function (recognizer) {
-            // if (recognizer.state === WorldWind.BEGAN || recognizer.state === WorldWind.RECOGNIZED) {
-            //     this.cancelFlingAnimation();
-            // }
 
             var isArcBall = this.wwd.navigator.camera instanceof ArcBallCamera;
-
-            // // If a double click started the gesture, handle as a zoom
-            // this.doubleClick = (recognizer === this.doubleClickRecognizer || recognizer === this.doubleTapRecognizer)
-            // if (recognizer === this.doubleClickRecognizer || recognizer === this.doubleTapRecognizer) {
-            //     console.log("double")
-            //     this.doubleClick = true
-            //     // must be set back to false at the end of a fling
-            // } else 
-
-            console.log("primaryDoubleClickDragRecognizer: "+this.primaryDoubleClickDragRecognizer.state)
-            console.log("primaryDragRecognizer: "+this.primaryDragRecognizer.state)
-            // console.log("panRecognizer: "+this.panRecognizer.state)
-            // console.log("secondaryDragRecognizer: "+this.secondaryDragRecognizer.state)
-            // console.log("pinchRecognizer: "+this.pinchRecognizer.state)
-            // console.log("rotationRecognizer: "+this.rotationRecognizer.state)
-            // console.log("tiltRecognizer: "+this.tiltRecognizer.state)
-
-            // console.log("flingRecognizer: "+this.flingRecognizer.state)
-            // console.log("doubleFlingRecognizer: "+this.doubleFlingRecognizer.state)
-
-            if ( recognizer === this.primaryDoubleClickDragRecognizer) {
-                    this.handleDoubleClickDragOrPan(recognizer);
-            }
-
             
-            else if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
+            if (recognizer === this.primaryDragRecognizer || recognizer === this.panRecognizer) {
                  if (isArcBall) {
                     this.handlePanOrDrag(recognizer);
                     }
@@ -33913,23 +33811,10 @@ define('BasicWorldWindowController',[
             else if (recognizer === this.tiltRecognizer) {
                 this.handleTilt(recognizer);
             }
-            // else if (recognizer === this.clickRecognizer || recognizer === this.tapRecognizer) {
-            //     this.handleClickOrTap(recognizer);
-            // }
             else if (recognizer === this.doubleFlingRecognizer) {
-                // if (recognizer === this.doubleClickRecognizer || recognizer === this.doubleTapRecognizer) {
-                //     this.handleDoubleClickFling(recognizer);
-                // } else {
-                //     this.handleFling(recognizer);
-                // }
                 this.handleDoubleClickFling(recognizer);
             }
             else if (recognizer === this.flingRecognizer) {
-                // if (recognizer === this.doubleClickRecognizer || recognizer === this.doubleTapRecognizer) {
-                //     this.handleDoubleClickFling(recognizer);
-                // } else {
-                //     this.handleFling(recognizer);
-                // }
                 this.handleFling(recognizer);
             }
         };
@@ -33960,12 +33845,12 @@ define('BasicWorldWindowController',[
             if (this.wwd.globe.is2D()) {
                 this.handlePanOrDrag2D(recognizer);
             } else {
-                this.handlePanOrDrag3D(recognizer);
-                // if (this.doubleClick) {
-                //     this.handleDoubleClickDragOrPan(recognizer)
-                // } else {
-                //     this.handlePanOrDrag3D(recognizer);
-                // }                
+                // this.handlePanOrDrag3D(recognizer);
+                if (this.doubleClickRecognizer.state == WorldWind.RECOGNIZED || this.doubleTapRecognizer.state == WorldWind.RECOGNIZED) {
+                    this.handleDoubleClickDragOrPan(recognizer)
+                } else {
+                    this.handlePanOrDrag3D(recognizer);
+                }                
             }
         };
 
@@ -34162,12 +34047,6 @@ define('BasicWorldWindowController',[
                 this.handleFling2D(recognizer);
             } else {
                 this.handleFling3D(recognizer);
-                // if (this.doubleClick) {
-                //     this.handleDoubleClickFling(recognizer);
-                // } else {
-                //     this.handleFling3D(recognizer);
-                // }
-                
             }
         };
 
