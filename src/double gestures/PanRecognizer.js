@@ -48,43 +48,83 @@ define(['../gesture/GestureRecognizer'],
              */
             this.maxNumberOfTouches = Number.MAX_VALUE;
 
+                        /**
+             *
+             * @type {Number}
+             */
+            this.requiredTouches = 1;
+
             // Intentionally not documented.
             this.interpretDistance = 20;
+
+            this.numberOfTaps = 1;
+            this.tapCounter = 0;
+            this.maxTapInterval = 300;
+
         };
 
         PanRecognizer.prototype = Object.create(GestureRecognizer.prototype);
 
         // Documented in superclass.
+        PanRecognizer.prototype.reset = function () {
+            console.log("pan reset (numberOfTaps: "+this.numberOfTaps+" / tapCounter: "+this.tapCounter+" / touches: "+this.touchCount+" min/max: "+this.minNumberOfTouches+"/"+this.maxNumberOfTouches+")")
+            GestureRecognizer.prototype.reset.call(this);
+            this.tapCounter = 0;
+            this.cancelFailAfterDelay();
+
+        };
+        // Documented in superclass.
         PanRecognizer.prototype.mouseDown = function (event) {
             if (this.state == WorldWind.POSSIBLE) {
+                console.log("mouse causes FAIL")
                 this.state = WorldWind.FAILED; // touch gestures fail upon receiving a mouse event
             }
         };
 
+        PanRecognizer.prototype.touchStart = function (event) {
+            if (this.state != WorldWind.POSSIBLE) {
+                return;
+            }
+
+            if ( this.shouldRecognize() ) {
+
+                this.tapCounter += 1;
+                if ( this.numberOfTaps > 1 ) this.failAfterDelay(this.maxTapInterval)
+                if ( this.tapCounter > this.numberOfTaps  ) this.state = WorldWind.FAILED;
+    
+                console.log("pan recognized start (numberOfTaps: "+this.numberOfTaps+" / tapCounter: "+this.tapCounter+" / touches: "+this.touchCount+")")
+            }
+
+
+        };
+
+
         // Documented in superclass.
         PanRecognizer.prototype.touchMove = function (touch) {
+            // console.log("pan  move (numberOfTaps: "+this.numberOfTaps+" / tapCounter: "+this.tapCounter+" / touches: "+this.touchCount+" min/max: "+this.minNumberOfTouches+"/"+this.maxNumberOfTouches+")")
             if (this.state == WorldWind.POSSIBLE) {
                 if (this.shouldInterpret()) {
                     if (this.shouldRecognize()) {
+                        console.log("pan first move (numberOfTaps: "+this.numberOfTaps+" / tapCounter: "+this.tapCounter+" / touches: "+this.touchCount+" min/max: "+this.minNumberOfTouches+"/"+this.maxNumberOfTouches+")")
                         this.state = WorldWind.BEGAN;
-                    } else {
-                        this.state = WorldWind.FAILED;
                     }
                 }
             } else if (this.state == WorldWind.BEGAN || this.state == WorldWind.CHANGED) {
+                console.log("pan state to changed (numberOfTaps: "+this.numberOfTaps+" / tapCounter: "+this.tapCounter+" / touches: "+this.touchCount+" min/max: "+this.minNumberOfTouches+"/"+this.maxNumberOfTouches+")")
                 this.state = WorldWind.CHANGED;
             }
         };
 
         // Documented in superclass.
         PanRecognizer.prototype.touchEnd = function (touch) {
-            if (this.touchCount == 0) { // last touch ended
-                if (this.state == WorldWind.POSSIBLE) {
-                    this.state = WorldWind.FAILED;
-                } else if (this.state == WorldWind.BEGAN || this.state == WorldWind.CHANGED) {
-                    this.state = WorldWind.ENDED;
-                }
-            }
+            // if (this.touchCount == 0) { // last touch ended
+            //     if (this.state == WorldWind.POSSIBLE) {
+            //         this.state = WorldWind.FAILED;
+            //     } else if (this.state == WorldWind.BEGAN || this.state == WorldWind.CHANGED) {
+            //         console.log("pan  ended (numberOfTaps: "+this.numberOfTaps+" / tapCounter: "+this.tapCounter+" / touches: "+this.touchCount+" min/max: "+this.minNumberOfTouches+"/"+this.maxNumberOfTouches+")")
+            //         this.state = WorldWind.ENDED;
+            //     }
+            // }
         };
 
         // Documented in superclass.
@@ -114,7 +154,8 @@ define(['../gesture/GestureRecognizer'],
             var dx = this.translationX,
                 dy = this.translationY,
                 distance = Math.sqrt(dx * dx + dy * dy);
-            return distance > this.interpretDistance; // interpret touches when the touch centroid moves far enough
+                // console.log("pan shouldInterpret (numberOfTaps: "+this.numberOfTaps+" / tapCounter: "+this.tapCounter+" / distance: "+distance+" min/max: "+this.minNumberOfTouches+"/"+this.maxNumberOfTouches+")")
+                return (distance > this.interpretDistance && this.numberOfTaps == this.tapCounter); // interpret touches when the touch centroid moves far enough
         };
 
         /**
@@ -124,10 +165,36 @@ define(['../gesture/GestureRecognizer'],
          */
         PanRecognizer.prototype.shouldRecognize = function () {
             var touchCount = this.touchCount;
+            // console.log("pan shouldRecognize (numberOfTaps: "+this.numberOfTaps+" / tapCounter: "+this.tapCounter+" / touches: "+this.touchCount+" min/max: "+this.minNumberOfTouches+"/"+this.maxNumberOfTouches+")")
             return touchCount != 0
                 && touchCount >= this.minNumberOfTouches
                 && touchCount <= this.maxNumberOfTouches
         };
+
+        // Intentionally not documented.
+        PanRecognizer.prototype.failAfterDelay = function (delay) {
+            var self = this;
+            if (self.timeout) {
+                window.clearTimeout(self.timeout);
+            }
+
+            self.timeout = window.setTimeout(function () {
+                self.timeout = null;
+                if (self.state == WorldWind.POSSIBLE || self.state == WorldWind.BEGAN) {
+                    self.state = WorldWind.FAILED; // fail if we haven't already reached a terminal state
+                }
+            }, delay);
+        };
+
+        // Intentionally not documented.
+        PanRecognizer.prototype.cancelFailAfterDelay = function () {
+            var self = this;
+            if (self.timeout) {
+                window.clearTimeout(self.timeout);
+                self.timeout = null;
+            }
+        };
+        
 
         return PanRecognizer;
     });

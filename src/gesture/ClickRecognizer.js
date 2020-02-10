@@ -91,13 +91,16 @@ define(['../gesture/GestureRecognizer'],
                     clientY: this.clientY
                 };
                 this.clicks.push(click);
-                this.failAfterDelay(this.maxClickDuration); // fail if the click is down too long
+                
 
                 // recognize gesture on last mouse down
                 if(this.recogniseOnLastMouseDown && this.clicks.length == this.numberOfClicks) {
+                    console.log("double recognized")
                     this.clientX = this.clicks[0].clientX;
                     this.clientY = this.clicks[0].clientY;
                     this.state = WorldWind.RECOGNIZED;
+                } else {
+                    this.failAfterDelay(this.maxClickDuration); // fail if the click is down too long
                 }
 
 

@@ -43,23 +43,56 @@ define(['../gesture/GestureRecognizer'],
             this.button = 0;
 
             // Intentionally not documented.
-            this.interpretDistance = 5;
+            this.interpretDistance = 3;
+            
+            this.numberOfClicks = 1;
+            this.clickCounter = 0;
+            this.maxClickInterval = 400;
+
+
         };
+
+
 
         DragRecognizer.prototype = Object.create(GestureRecognizer.prototype);
 
         // Documented in superclass.
+        DragRecognizer.prototype.reset = function () {
+            GestureRecognizer.prototype.reset.call(this);
+            this.clickCounter = 0;
+            this.cancelFailAfterDelay();
+
+        };
+
+        // Documented in superclass.
+        DragRecognizer.prototype.mouseDown = function (event) {
+            if (this.state != WorldWind.POSSIBLE) {
+                return;
+            }
+
+            if (this.button != event.button) {
+                this.state = WorldWind.FAILED;
+            } else {
+                this.clickCounter += 1;
+                if ( this.numberOfClicks > 1 ) this.failAfterDelay(this.maxClickInterval)
+                if ( this.clickCounter > this.numberOfClicks  ) this.state = WorldWind.FAILED;
+
+            }
+        };
+
+
+        // Documented in superclass.
         DragRecognizer.prototype.mouseMove = function (event) {
             if (this.state == WorldWind.POSSIBLE) {
+
                 if (this.shouldInterpret()) {
                     if (this.shouldRecognize()) {
                         this.translationX = 0; // set translation to zero when the drag begins
                         this.translationY = 0;
                         this.state = WorldWind.BEGAN;
-                    } else {
-                        this.state = WorldWind.FAILED;
                     }
                 }
+                
             } else if (this.state == WorldWind.BEGAN || this.state == WorldWind.CHANGED) {
                 this.state = WorldWind.CHANGED;
             }
@@ -69,10 +102,7 @@ define(['../gesture/GestureRecognizer'],
         DragRecognizer.prototype.mouseUp = function (event) {
             if (this.mouseButtonMask == 0) { // last button up
                 if (this.state == WorldWind.POSSIBLE) {
-                    this.state = WorldWind.FAILED;
-                } else if (this.state == WorldWind.BEGAN || this.state == WorldWind.CHANGED) {
-                    this.state = WorldWind.ENDED;
-                }
+                } 
             }
         };
 
@@ -83,6 +113,7 @@ define(['../gesture/GestureRecognizer'],
             }
         };
 
+
         /**
          *
          * @returns {Boolean}
@@ -92,7 +123,9 @@ define(['../gesture/GestureRecognizer'],
             var dx = this.translationX,
                 dy = this.translationY,
                 distance = Math.sqrt(dx * dx + dy * dy);
-            return distance > this.interpretDistance; // interpret mouse movement when the cursor moves far enough
+                
+
+            return (distance > this.interpretDistance && this.numberOfClicks == this.clickCounter); // interpret mouse movement when the cursor moves far enough
         };
 
         /**
@@ -102,8 +135,32 @@ define(['../gesture/GestureRecognizer'],
          */
         DragRecognizer.prototype.shouldRecognize = function () {
             var buttonBit = (1 << this.button);
-            return buttonBit == this.mouseButtonMask; // true when the specified button is the only button down
+            return (buttonBit == this.mouseButtonMask); // true when the specified button is the only button down
         };
 
+        // Intentionally not documented.
+        DragRecognizer.prototype.failAfterDelay = function (delay) {
+            var self = this;
+            if (self.timeout) {
+                window.clearTimeout(self.timeout);
+            }
+
+            self.timeout = window.setTimeout(function () {
+                self.timeout = null;
+                if (self.state == WorldWind.POSSIBLE || self.state == WorldWind.BEGAN) {
+                    self.state = WorldWind.FAILED; // fail if we haven't already reached a terminal state
+                }
+            }, delay);
+        };
+
+
+        // Intentionally not documented.
+        DragRecognizer.prototype.cancelFailAfterDelay = function () {
+            var self = this;
+            if (self.timeout) {
+                window.clearTimeout(self.timeout);
+                self.timeout = null;
+            }
+        };
         return DragRecognizer;
     });

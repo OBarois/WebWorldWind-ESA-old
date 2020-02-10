@@ -110,9 +110,11 @@ define(['../gesture/GestureRecognizer'],
                     this.clientX = this.taps[0].clientX;
                     this.clientY = this.taps[0].clientY;
                     this.state = WorldWind.RECOGNIZED;
+                } else {
+                    this.failAfterDelay(this.maxTapDuration); // fail if the tap is down too long
                 }
                 
-                this.failAfterDelay(this.maxTapDuration); // fail if the tap is down too long
+                
             } else {
                 tap = this.taps[this.taps.length - 1];
                 tap.touchCount = this.touchCount; // max number of simultaneous touches
